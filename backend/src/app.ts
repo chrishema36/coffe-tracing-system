@@ -83,6 +83,16 @@ export const createApp = (prisma: PrismaClient): Express => {
   // Structured HTTP request logging
   app.use(pinoHttp({ autoLogging: process.env.NODE_ENV !== 'test' }));
 
+  // Health check FIRST — no rate limit (used by Render, load balancers & Docker)
+  app.get('/health', (_req, res) => {
+    res.status(200).json({
+      status: 'UP',
+      service: 'CoffeeTrace Backend API',
+      version: '1.0.0',
+      timestamp: new Date().toISOString(),
+    });
+  });
+
   // Global rate limiting
   app.use(globalRateLimiter);
 
@@ -93,16 +103,6 @@ export const createApp = (prisma: PrismaClient): Express => {
     } else {
       next();
     }
-  });
-
-  // Health check — no rate limit (used by load balancers & Docker)
-  app.get('/health', (_req, res) => {
-    res.status(200).json({
-      status: 'UP',
-      service: 'CoffeeTrace Backend API',
-      version: '1.0.0',
-      timestamp: new Date().toISOString(),
-    });
   });
 
   // Swagger Documentation
