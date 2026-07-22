@@ -83,7 +83,14 @@ export const swaggerSpec = {
     },
   },
   servers: [
-    { url: 'http://localhost:4000/api/v1', description: 'Local Development Server' },
+    {
+      url: process.env.API_URL || 'https://coffe-tracing-system.onrender.com/api/v1',
+      description: 'Production Server',
+    },
+    {
+      url: 'http://localhost:4000/api/v1',
+      description: 'Local Development Server',
+    },
   ],
   components: {
     schemas: {
