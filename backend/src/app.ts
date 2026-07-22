@@ -83,6 +83,17 @@ export const createApp = (prisma: PrismaClient): Express => {
   // Structured HTTP request logging
   app.use(pinoHttp({ autoLogging: process.env.NODE_ENV !== 'test' }));
 
+  // Root landing endpoint
+  app.get('/', (_req, res) => {
+    res.status(200).json({
+      message: 'CoffeeTrace Backend API',
+      version: '1.0.0',
+      documentation: '/docs',
+      health: '/health',
+      status: 'running',
+    });
+  });
+
   // Health check FIRST — no rate limit (used by Render, load balancers & Docker)
   app.get('/health', (_req, res) => {
     res.status(200).json({
