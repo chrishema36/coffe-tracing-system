@@ -12,8 +12,10 @@ export class FarmerRepository {
   }
 
   async findById(id: string): Promise<Farmer | null> {
-    return this.prisma.farmer.findUnique({
-      where: { id },
+    return this.prisma.farmer.findFirst({
+      where: {
+        OR: [{ id }, { code: id }],
+      },
       include: {
         _count: {
           select: { bags: true },

@@ -17,7 +17,7 @@ export const CreateFarmerSchema = z.object({
   email: z.string().email('Invalid email address').optional(),
   phone: z.string().optional(),
   region: z.string().min(2, 'Region is required'),
-  country: z.string().default('Ethiopia'),
+  country: z.string().default('Rwanda'),
   elevationM: z.number().int().positive().optional(),
 });
 

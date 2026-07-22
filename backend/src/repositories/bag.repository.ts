@@ -24,8 +24,10 @@ export class BagRepository {
   }
 
   async findById(id: string): Promise<CoffeeBag | null> {
-    return this.prisma.coffeeBag.findUnique({
-      where: { id },
+    return this.prisma.coffeeBag.findFirst({
+      where: {
+        OR: [{ id }, { bagCode: id }],
+      },
       include: {
         farmer: true,
         parentRelations: { include: { parentBag: true } },

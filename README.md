@@ -19,11 +19,12 @@
 
 | Component | Platform | Live URL / Endpoint |
 | :--- | :--- | :--- |
-| 🖥️ **Frontend Application** | Vercel | [https://coffee-trace.vercel.app](https://coffee-trace.vercel.app) |
-| ⚙️ **Backend REST API** | Render | [https://coffeetrace-api.onrender.com/api/v1](https://coffeetrace-api.onrender.com/api/v1) |
-| 📚 **Swagger API Docs** | Render | [https://coffeetrace-api.onrender.com/docs](https://coffeetrace-api.onrender.com/docs) |
-| 🐘 **PostgreSQL Database** | Neon / Render | Managed PostgreSQL Serverless Database |
-| 🩺 **API Health Check** | Render | [https://coffeetrace-api.onrender.com/health](https://coffeetrace-api.onrender.com/health) |
+| 🖥️ **Frontend Application** | Vercel | [https://coffe-tracing-system-tau.vercel.app](https://coffe-tracing-system-tau.vercel.app) |
+| ⚙️ **Backend REST API** | Render | [https://coffe-tracing-system.onrender.com/api/v1](https://coffe-tracing-system.onrender.com/api/v1) |
+| 📚 **Swagger API Docs** | Render | [https://coffe-tracing-system.onrender.com/docs](https://coffe-tracing-system.onrender.com/docs) |
+| 🐘 **PostgreSQL Database** | Neon Serverless | Managed PostgreSQL (Neon — `ep-red-feather`) |
+| 🩺 **API Health Check** | Render | [https://coffe-tracing-system.onrender.com/health](https://coffe-tracing-system.onrender.com/health) |
+| 📦 **GitHub Repository** | GitHub | [https://github.com/chrishema36/coffe-tracing-system](https://github.com/chrishema36/coffe-tracing-system) |
 
 ---
 

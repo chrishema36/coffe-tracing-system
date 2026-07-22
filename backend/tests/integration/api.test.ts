@@ -17,6 +17,14 @@ describe('API Integration, Validation & Endpoint Tests', () => {
           { id: 'f-4', code: 'FRM-004', name: 'Clarisse U', region: 'Rulindo', country: 'Rwanda' },
           { id: 'f-5', code: 'FRM-005', name: 'Divine M', region: 'Karongi', country: 'Rwanda' },
         ]),
+        findFirst: jest.fn().mockImplementation(({ where }) => {
+          const id = where?.OR?.[0]?.id;
+          const code = where?.OR?.[1]?.code;
+          if (id === 'f-1' || code === 'FRM-001') {
+            return Promise.resolve({ id: 'f-1', code: 'FRM-001', name: 'Jean Bosco', region: 'Huye', country: 'Rwanda', _count: { bags: 2 } });
+          }
+          return Promise.resolve(null);
+        }),
         findUnique: jest.fn().mockImplementation(({ where }) => {
           if (where.id === 'f-1' || where.code === 'FRM-001') {
             return Promise.resolve({ id: 'f-1', code: 'FRM-001', name: 'Jean Bosco', region: 'Huye', country: 'Rwanda' });
