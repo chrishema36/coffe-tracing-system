@@ -63,8 +63,8 @@ export const createApp = (prisma: PrismaClient): Express => {
     cors({
       origin: (origin, callback) => {
         const allowed = getAllowedOrigins();
-        // Allow non-browser clients (curl, Postman, Docker health checks)
-        if (!origin || allowed.includes(origin)) {
+        // Allow non-browser clients (curl, Postman, Docker health checks) or vercel deployments
+        if (!origin || allowed.includes(origin) || origin.endsWith('.vercel.app')) {
           callback(null, true);
         } else {
           callback(new Error(`CORS: origin '${origin}' is not permitted.`));

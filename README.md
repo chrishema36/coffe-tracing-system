@@ -15,6 +15,18 @@
 
 ---
 
+## 🌐 Live Cloud Deployment
+
+| Component | Platform | Live URL / Endpoint |
+| :--- | :--- | :--- |
+| 🖥️ **Frontend Application** | Vercel | [https://coffee-trace.vercel.app](https://coffee-trace.vercel.app) |
+| ⚙️ **Backend REST API** | Render | [https://coffeetrace-api.onrender.com/api/v1](https://coffeetrace-api.onrender.com/api/v1) |
+| 📚 **Swagger API Docs** | Render | [https://coffeetrace-api.onrender.com/docs](https://coffeetrace-api.onrender.com/docs) |
+| 🐘 **PostgreSQL Database** | Neon / Render | Managed PostgreSQL Serverless Database |
+| 🩺 **API Health Check** | Render | [https://coffeetrace-api.onrender.com/health](https://coffeetrace-api.onrender.com/health) |
+
+---
+
 ## 🌟 Key Platform Features & Highlights
 
 - 🔄 **Traceability Replay Engine (⭐ Core Highlight):** Step-by-step 5–10 second animated playback demonstrating how smallholder farmer harvest bags recursively merge across tiers into final export lots.
