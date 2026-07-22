@@ -1,0 +1,96 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum BagStatus {
+  HARVESTED
+  IN_STORAGE
+  MERGED
+  EXPORTED
+}
+
+enum CoffeeVariety {
+  ARABICA
+  ROBUSTA
+  TYPICA
+  BOURBON
+  GEISHA
+}
+
+model Farmer {
+  id          String      @id @default(uuid())
+  code        String      @unique
+  name        String
+  email       String?
+  phone       String?
+  region      String
+  country     String      @default("Rwanda")
+  elevationM  Int?
+  bags        CoffeeBag[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Indexes for common query patterns
+  @@index([code])               // Unique lookup by farmer code
+  @@index([region])             // Filter by region
+  @@index([createdAt])          // Dashboard recent-farmers sort
+  @@index([name])               // Free-text search support
+}
+
+model CoffeeBag {
+  id              String          @id @default(uuid())
+  bagCode         String          @unique
+  initialWeightKg Float
+  currentWeightKg Float
+  moisturePercent Float?
+  qualityScore    Int?
+  variety         CoffeeVariety   @default(ARABICA)
+  status          BagStatus       @default(HARVESTED)
+
+  farmerId        String?
+  farmer          Farmer?         @relation(fields: [farmerId], references: [id], onDelete: SetNull)
+
+  // Parent relations: Bags that contributed TO this bag (source bags)
+  parentRelations MergeRelation[] @relation("ChildBag")
+
+  // Child relations: Bags created FROM this bag (target bags)
+  childRelations  MergeRelation[] @relation("ParentBag")
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  // Single-column indexes
+  @@index([bagCode])             // Primary lookup by code (also covered by @unique but explicit for clarity)
+  @@index([farmerId])            // Join performance: CoffeeBag → Farmer
+  @@index([createdAt])           // Dashboard and list sort performance
+
+  // Composite indexes for filtered pagination at scale (5M+ bags)
+  @@index([status, createdAt])   // GET /bags?status=HARVESTED — most common filtered query
+  @@index([variety, status])     // GET /bags?variety=BOURBON&status=IN_STORAGE — variety dashboard filter
+  @@index([farmerId, status])    // Farmer profile bag breakdown by status
+}
+
+model MergeRelation {
+  id           String    @id @default(uuid())
+  parentBagId  String
+  childBagId   String
+  weightUsedKg Float
+
+  parentBag    CoffeeBag @relation("ParentBag", fields: [parentBagId], references: [id], onDelete: Cascade)
+  childBag     CoffeeBag @relation("ChildBag", fields: [childBagId], references: [id], onDelete: Cascade)
+
+  createdAt    DateTime  @default(now())
+
+  // Composite unique: one parent can only contribute to one specific child bag once
+  @@unique([parentBagId, childBagId])
+
+  // Indexes critical for BFS lineage traversal at scale
+  @@index([parentBagId])         // Forward trace: "which lots did this bag feed into?"
+  @@index([childBagId])          // Backward trace: "which bags contributed to this lot?" — hot path
+  @@index([childBagId, parentBagId]) // Composite covering index for BFS queries in traceability engine
+}
