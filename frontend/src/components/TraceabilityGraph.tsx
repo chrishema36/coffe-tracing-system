@@ -209,8 +209,8 @@ function GraphInner({ traceData }: TraceabilityGraphProps) {
 
       {/* Main Graph Container */}
       <div className="w-full h-[540px] bg-background rounded-2xl border border-borderToken relative overflow-hidden shadow-2xl">
-        {/* Graph Legend Overlay */}
-        <div className="absolute top-4 left-4 z-20 bg-surface/90 backdrop-blur-md p-3 rounded-xl border border-borderToken text-[10px] space-y-1.5 shadow-xl">
+        {/* Graph Legend Overlay — top-right, clear of graph nodes */}
+        <div className="absolute top-4 right-4 z-20 bg-surface/90 backdrop-blur-md p-3 rounded-xl border border-borderToken text-[10px] space-y-1.5 shadow-xl">
           <div className="font-extrabold uppercase tracking-widest text-amberAccent mb-1">Graph Legend</div>
           <div className="flex items-center space-x-2 text-emerald-300">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
