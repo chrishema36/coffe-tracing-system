@@ -12,6 +12,7 @@ import {
   ChevronRight,
   X,
   Settings,
+  BookOpen,
 } from 'lucide-react';
 import { useSidebar } from '../context/SidebarContext';
 
@@ -20,6 +21,7 @@ const navItems = [
   { label: 'Farmers', href: '/farmers', icon: Users, badge: null },
   { label: 'Coffee Bags', href: '/bags', icon: Package, badge: null },
   { label: 'Traceability Graph', href: '/trace/EXPORT-SUPER-LOT-01', icon: GitMerge, badge: 'Replay' },
+  { label: 'Documentation', href: '/documentation', icon: BookOpen, badge: null },
   { label: 'Settings', href: '/settings', icon: Settings, badge: null },
 ];
 

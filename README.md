@@ -35,6 +35,7 @@
 - ⚡ **Command Palette (`Ctrl + K` / `Cmd + K`):** Global quick-search and action overlay for farmers, bags, merges, and settings.
 - 👤 **Farmer Profile Side Drawer:** Slide-over panel with contact info, bag counts, yield stats, and harvest history.
 - 📊 **Executive Dashboard:** Activity timeline, variety breakdown, and operational quick actions.
+- 📖 **In-app Product Catalogue:** Documentation under Settings → Documentation (also `/documentation`) covering terminology, workflows, statuses, and attribution.
 - 📄 **Paginated listings:** Farmer and bag lists default to 5 records per page (API-enforced).
 
 ---

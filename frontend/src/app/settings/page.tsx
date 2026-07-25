@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import {
   Settings as SettingsIcon,
@@ -13,6 +14,8 @@ import {
   RefreshCw,
   CheckCircle2,
   Bell,
+  BookOpen,
+  ArrowRight,
 } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 import { fetchDashboardSummary } from '../../lib/api';
@@ -23,10 +26,21 @@ import {
   applyUiPrefs,
   loadWorkspaceSettings,
 } from '../../lib/workspaceSettings';
+import { ProductCatalogue } from '../documentation/ProductCatalogue';
 
-export default function SettingsPage() {
+type SettingsTab = 'general' | 'system' | 'about' | 'documentation';
+
+const VALID_TABS: SettingsTab[] = ['general', 'system', 'about', 'documentation'];
+
+function SettingsPageInner() {
   const toast = useToast();
-  const [activeTab, setActiveTab] = useState<'general' | 'system' | 'about'>('general');
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const initialTab: SettingsTab =
+    tabParam && VALID_TABS.includes(tabParam as SettingsTab) ? (tabParam as SettingsTab) : 'general';
+
+  const [activeTab, setActiveTab] = useState<SettingsTab>(initialTab);
   const [form, setForm] = useState<WorkspaceSettings>(DEFAULT_SETTINGS);
   const [dirty, setDirty] = useState(false);
 
@@ -50,6 +64,18 @@ export default function SettingsPage() {
     setForm(saved);
     applyUiPrefs(saved);
   }, []);
+
+  useEffect(() => {
+    if (tabParam && VALID_TABS.includes(tabParam as SettingsTab)) {
+      setActiveTab(tabParam as SettingsTab);
+    }
+  }, [tabParam]);
+
+  const selectTab = (tab: SettingsTab) => {
+    setActiveTab(tab);
+    const url = tab === 'general' ? '/settings' : `/settings?tab=${tab}`;
+    router.replace(url, { scroll: false });
+  };
 
   const updateField = <K extends keyof WorkspaceSettings>(key: K, value: WorkspaceSettings[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -77,7 +103,11 @@ export default function SettingsPage() {
     : '—';
 
   return (
-    <div className="space-y-6 animate-fadeIn max-w-5xl mx-auto">
+    <div
+      className={`space-y-6 animate-fadeIn mx-auto ${
+        activeTab === 'documentation' ? 'max-w-6xl' : 'max-w-5xl'
+      }`}
+    >
       <div className="p-6 rounded-2xl bg-gradient-to-r from-surface via-surfaceHover to-background border border-borderToken shadow-xl flex items-center justify-between gap-4">
         <div className="flex items-center space-x-3.5 min-w-0">
           <div className="p-3 rounded-2xl bg-amberAccent/15 border border-amberAccent/35 text-amberAccent shadow-md shrink-0">
@@ -86,7 +116,9 @@ export default function SettingsPage() {
           <div className="min-w-0">
             <h1 className="text-2xl font-black text-gray-100 tracking-tight">Settings</h1>
             <p className="text-xs text-gray-400 truncate">
-              Workspace preferences for {form.displayName || 'this browser'}
+              {activeTab === 'documentation'
+                ? 'Product catalogue & terminology guide'
+                : `Workspace preferences for ${form.displayName || 'this browser'}`}
             </p>
           </div>
         </div>
@@ -107,6 +139,7 @@ export default function SettingsPage() {
         {[
           { id: 'general' as const, label: 'Workspace', icon: User },
           { id: 'system' as const, label: 'System Health', icon: Server },
+          { id: 'documentation' as const, label: 'Documentation', icon: BookOpen },
           { id: 'about' as const, label: 'About', icon: Info },
         ].map((tab) => {
           const Icon = tab.icon;
@@ -114,7 +147,7 @@ export default function SettingsPage() {
             <button
               key={tab.id}
               type="button"
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => selectTab(tab.id)}
               className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl font-bold transition-all whitespace-nowrap ${
                 activeTab === tab.id
                   ? 'bg-amberAccent text-gray-950 shadow-md'
@@ -281,31 +314,66 @@ export default function SettingsPage() {
         </div>
       )}
 
+      {activeTab === 'documentation' && <ProductCatalogue embedded />}
+
       {activeTab === 'about' && (
-        <div className="p-6 rounded-2xl border border-borderToken bg-surface space-y-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 rounded-2xl bg-amberAccent/20 border border-amberAccent/40 flex items-center justify-center text-amberAccent shadow-lg">
-              <Coffee className="w-6 h-6" />
+        <div className="space-y-4">
+          <div className="p-6 rounded-2xl border border-borderToken bg-surface space-y-4">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 rounded-2xl bg-amberAccent/20 border border-amberAccent/40 flex items-center justify-center text-amberAccent shadow-lg">
+                <Coffee className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="text-lg font-black text-gray-100">CoffeeTrace</h2>
+                <p className="text-xs text-gray-400">Multi-tier coffee bag lineage & farmer attribution</p>
+              </div>
             </div>
-            <div>
-              <h2 className="text-lg font-black text-gray-100">CoffeeTrace</h2>
-              <p className="text-xs text-gray-400">Multi-tier coffee bag lineage & farmer attribution</p>
+
+            <div className="p-4 rounded-xl bg-background/60 border border-borderToken text-xs text-gray-300 space-y-2 leading-relaxed">
+              <p>
+                Track harvest bags from smallholder farmers through recursive merges into export lots, with
+                backward and forward lineage, weight-based farmer attribution, and printable origin certificates.
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-[11px] text-gray-400 pt-1">
+                <li>Next.js frontend · Express + Prisma + PostgreSQL backend</li>
+                <li>Bag merge engine with cycle protection</li>
+                <li>Paginated farmer and bag listings (max 5 per page)</li>
+              </ul>
             </div>
           </div>
 
-          <div className="p-4 rounded-xl bg-background/60 border border-borderToken text-xs text-gray-300 space-y-2 leading-relaxed">
-            <p>
-              Track harvest bags from smallholder farmers through recursive merges into export lots, with
-              backward and forward lineage, weight-based farmer attribution, and printable origin certificates.
-            </p>
-            <ul className="list-disc list-inside space-y-1 text-[11px] text-gray-400 pt-1">
-              <li>Next.js frontend · Express + Prisma + PostgreSQL backend</li>
-              <li>Bag merge engine with cycle protection</li>
-              <li>Paginated farmer and bag listings (max 5 per page)</li>
-            </ul>
-          </div>
+          <button
+            type="button"
+            onClick={() => selectTab('documentation')}
+            className="w-full flex items-center justify-between gap-4 p-5 rounded-2xl border border-amberAccent/35 bg-amberAccent/10 hover:bg-amberAccent/15 transition-colors group text-left"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="p-2.5 rounded-xl bg-amberAccent/20 text-amberAccent shrink-0">
+                <BookOpen className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-sm font-bold text-gray-100">Open the product catalogue</div>
+                <p className="text-[11px] text-gray-400 truncate">
+                  Full guide: terminology, workflows, statuses, attribution, and system rules
+                </p>
+              </div>
+            </div>
+            <ArrowRight className="w-4 h-4 text-amberAccent group-hover:translate-x-0.5 transition-transform shrink-0" />
+          </button>
         </div>
       )}
     </div>
+  );
+}
+
+export default function SettingsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="max-w-5xl mx-auto p-8 text-sm text-gray-400 animate-fadeIn">Loading settings…</div>
+      }
+    >
+      <SettingsPageInner />
+    </Suspense>
   );
 }

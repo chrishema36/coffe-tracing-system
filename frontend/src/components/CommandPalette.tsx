@@ -11,6 +11,7 @@ import {
   FileText,
   Settings,
   LayoutDashboard,
+  BookOpen,
   X,
   Command,
   ArrowRight,
@@ -133,6 +134,12 @@ export function CommandPalette({
           action: () => navigate('/trace/EXPORT-SUPER-LOT-01'),
         },
         { id: 'nav-settings', label: 'Go to System Settings', icon: Settings, action: () => navigate('/settings') },
+        {
+          id: 'nav-docs',
+          label: 'Open Product Catalogue / Documentation',
+          icon: BookOpen,
+          action: () => navigate('/documentation'),
+        },
       ],
     },
   ];
