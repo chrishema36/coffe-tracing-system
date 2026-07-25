@@ -19,15 +19,25 @@ export interface Farmer {
   id: string;
   code: string;
   name: string;
-  email?: string;
-  phone?: string;
+  email?: string | null;
+  phone?: string | null;
   region: string;
   country: string;
-  elevationM?: number;
+  elevationM?: number | null;
   createdAt: string;
   bags?: CoffeeBag[];
   _count?: { bags: number };
 }
+
+/** PATCH body — null clears optional fields on the server */
+export type UpdateFarmerPayload = {
+  name?: string;
+  email?: string | null;
+  phone?: string | null;
+  region?: string;
+  country?: string;
+  elevationM?: number | null;
+};
 
 export enum CoffeeVariety {
   ARABICA = 'ARABICA',

@@ -6,6 +6,7 @@ import {
   TraceabilityResult,
   ForwardTraceResult,
   DashboardSummary,
+  UpdateFarmerPayload,
 } from '../types';
 
 const api = axios.create({
@@ -32,7 +33,7 @@ export const fetchFarmerById = async (idOrCode: string) => {
   return data;
 };
 
-export const updateFarmer = async (idOrCode: string, farmerData: Partial<Farmer>) => {
+export const updateFarmer = async (idOrCode: string, farmerData: UpdateFarmerPayload) => {
   const { data } = await api.patch<ApiResponse<Farmer>>(
     `/farmers/${encodeURIComponent(idOrCode)}`,
     farmerData
