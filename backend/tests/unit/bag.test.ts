@@ -119,7 +119,7 @@ describe('BagService (Unit Tests)', () => {
   });
 
   // -----------------------------------------------------------------------
-  // getAllBags() — Pagination Guard
+  // getAllBags() - Pagination Guard
   // -----------------------------------------------------------------------
   describe('getAllBags() pagination guard', () => {
     it('should enforce max limit of 5 regardless of input', async () => {

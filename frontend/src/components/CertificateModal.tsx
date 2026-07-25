@@ -166,7 +166,7 @@ export function CertificateModal({
       </ModalHeader>
 
       <ModalBody className="bg-[#1a1814]/40">
-        {/* Printable paper certificate — light document style for PDF */}
+        {/* Printable paper certificate - light document style for PDF */}
         <div
           id="certificate-pdf-canvas"
           className="mx-auto w-full max-w-[720px] bg-white text-[#1c2430] shadow-xl"

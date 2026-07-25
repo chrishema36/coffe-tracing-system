@@ -64,7 +64,7 @@ export const createApp = (prisma: PrismaClient): Express => {
     })
   );
 
-  // CORS — allowlist from environment
+  // CORS - allowlist from environment
   app.use(
     cors({
       origin: (origin, callback) => {
@@ -100,7 +100,7 @@ export const createApp = (prisma: PrismaClient): Express => {
     });
   });
 
-  // Health check FIRST — no rate limit (used by Render, load balancers & Docker)
+  // Health check FIRST - no rate limit (used by Render, load balancers & Docker)
   app.get('/health', (_req, res) => {
     res.status(200).json({
       status: 'UP',

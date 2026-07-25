@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import {
   BookOpen,
@@ -36,19 +36,31 @@ const STATUS_STYLES = {
   emerald: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300',
 } as const;
 
+const SCROLL_OFFSET = 88;
+
+function getScrollParent(el: HTMLElement | null): HTMLElement | null {
+  let node = el?.parentElement ?? null;
+  while (node && node !== document.body) {
+    const { overflowY } = window.getComputedStyle(node);
+    if (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay') {
+      return node;
+    }
+    node = node.parentElement;
+  }
+  return null;
+}
+
 function SectionHeading({
-  id,
   eyebrow,
   title,
   children,
 }: {
-  id: CatalogueSectionId;
   eyebrow: string;
   title: string;
   children?: ReactNode;
 }) {
   return (
-    <header id={id} className="scroll-mt-28 space-y-2 border-b border-borderToken/80 pb-5">
+    <header className="space-y-2 border-b border-borderToken/80 pb-5">
       <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-amberAccent">{eyebrow}</p>
       <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-gray-50">{title}</h2>
       {children ? <div className="text-sm text-gray-400 leading-relaxed max-w-3xl">{children}</div> : null}
@@ -59,6 +71,9 @@ function SectionHeading({
 export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
   const [activeId, setActiveId] = useState<CatalogueSectionId>('overview');
   const [glossaryFilter, setGlossaryFilter] = useState('');
+  const navRef = useRef<HTMLElement | null>(null);
+  const activeBtnRefs = useRef<Partial<Record<CatalogueSectionId, HTMLButtonElement | null>>>({});
+  const rootRef = useRef<HTMLDivElement | null>(null);
 
   const filteredGlossary = useMemo(() => {
     const q = glossaryFilter.trim().toLowerCase();
@@ -68,37 +83,66 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
     );
   }, [glossaryFilter]);
 
-  useEffect(() => {
-    const nodes = CATALOGUE_NAV.map((item) => document.getElementById(item.id)).filter(
-      Boolean
-    ) as HTMLElement[];
-    if (!nodes.length) return;
+  const updateActiveFromScroll = useCallback(() => {
+    const first = document.getElementById(CATALOGUE_NAV[0].id);
+    if (!first) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
-        const top = visible[0]?.target?.id as CatalogueSectionId | undefined;
-        if (top) setActiveId(top);
-      },
-      { rootMargin: '-20% 0px -55% 0px', threshold: [0.15, 0.35, 0.6] }
-    );
+    const scrollRoot = getScrollParent(first);
+    const marker = scrollRoot
+      ? scrollRoot.getBoundingClientRect().top + SCROLL_OFFSET
+      : SCROLL_OFFSET;
 
-    nodes.forEach((node) => observer.observe(node));
-    return () => observer.disconnect();
+    let current: CatalogueSectionId = CATALOGUE_NAV[0].id;
+    for (const item of CATALOGUE_NAV) {
+      const el = document.getElementById(item.id);
+      if (!el) continue;
+      if (el.getBoundingClientRect().top <= marker + 4) {
+        current = item.id;
+      }
+    }
+    setActiveId((prev) => (prev === current ? prev : current));
   }, []);
+
+  useEffect(() => {
+    const first = document.getElementById(CATALOGUE_NAV[0].id);
+    const scrollRoot = getScrollParent(first) ?? window;
+
+    updateActiveFromScroll();
+    scrollRoot.addEventListener('scroll', updateActiveFromScroll, { passive: true });
+    window.addEventListener('resize', updateActiveFromScroll);
+
+    return () => {
+      scrollRoot.removeEventListener('scroll', updateActiveFromScroll);
+      window.removeEventListener('resize', updateActiveFromScroll);
+    };
+  }, [updateActiveFromScroll]);
+
+  useEffect(() => {
+    const btn = activeBtnRefs.current[activeId];
+    const nav = navRef.current;
+    if (!btn || !nav) return;
+    btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }, [activeId]);
 
   const scrollTo = (id: CatalogueSectionId) => {
     const el = document.getElementById(id);
     if (!el) return;
-    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    const scrollRoot = getScrollParent(el);
     setActiveId(id);
+
+    if (scrollRoot) {
+      const rootRect = scrollRoot.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+      const nextTop = scrollRoot.scrollTop + (elRect.top - rootRect.top) - SCROLL_OFFSET + 8;
+      scrollRoot.scrollTo({ top: Math.max(0, nextTop), behavior: 'smooth' });
+    } else {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
   return (
-    <div className={`animate-fadeIn ${embedded ? '' : 'max-w-6xl mx-auto'}`}>
-      {/* Intro band */}
+    <div ref={rootRef} className={`animate-fadeIn ${embedded ? '' : 'max-w-6xl mx-auto'}`}>
       <div className="relative overflow-hidden rounded-3xl border border-borderToken bg-gradient-to-br from-[#1a1410] via-surface to-background px-6 py-8 sm:px-10 sm:py-11 mb-8">
         <div
           className="pointer-events-none absolute inset-0 opacity-[0.12]"
@@ -121,7 +165,7 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
             </h1>
             <p className="text-sm sm:text-[15px] text-gray-300 leading-relaxed">
               This guide explains what the system does, the language it uses, how coffee moves through
-              merges, and how origin is proven for any lot — written for operators, reviewers, and anyone
+              merges, and how origin is proven for any lot. Written for operators, reviewers, and anyone
               new to the platform.
             </p>
           </div>
@@ -145,38 +189,48 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
         </div>
       </div>
 
-      <div className="lg:grid lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-10">
-        {/* TOC */}
-        <aside className="mb-8 lg:mb-0 lg:sticky lg:top-24 lg:self-start">
+      <div className="lg:grid lg:grid-cols-[230px_minmax(0,1fr)] lg:gap-10 lg:items-start">
+        {/* Sticky TOC: sticks inside the app <main> scroll container */}
+        <aside className="sticky top-0 z-30 -mx-4 mb-6 px-4 py-3 lg:mx-0 lg:mb-0 lg:px-0 lg:py-2 lg:top-2 lg:max-h-[calc(100vh-1rem)] lg:overflow-y-auto bg-background/95 backdrop-blur-md border-b border-borderToken lg:border-b-0 lg:bg-background/90">
           <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-gray-500 mb-3 px-1">
             On this page
           </p>
-          <nav className="flex lg:flex-col gap-1.5 overflow-x-auto no-scrollbar pb-1 lg:pb-0">
-            {CATALOGUE_NAV.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => scrollTo(item.id)}
-                className={`shrink-0 text-left rounded-xl px-3 py-2 text-xs font-bold transition-colors ${
-                  activeId === item.id
-                    ? 'bg-amberAccent text-gray-950'
-                    : 'text-gray-400 hover:text-gray-100 hover:bg-surfaceHover border border-transparent lg:border-borderToken/60'
-                }`}
-              >
-                <span className="lg:hidden">{item.short}</span>
-                <span className="hidden lg:inline">{item.label}</span>
-              </button>
-            ))}
+          <nav
+            ref={navRef}
+            className="flex lg:flex-col gap-1.5 overflow-x-auto no-scrollbar pb-1 lg:pb-0"
+            aria-label="Documentation sections"
+          >
+            {CATALOGUE_NAV.map((item) => {
+              const isActive = activeId === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  ref={(node) => {
+                    activeBtnRefs.current[item.id] = node;
+                  }}
+                  onClick={() => scrollTo(item.id)}
+                  aria-current={isActive ? 'true' : undefined}
+                  className={`shrink-0 text-left rounded-xl px-3 py-2 text-xs font-bold transition-colors border ${
+                    isActive
+                      ? 'bg-amberAccent text-gray-950 border-amberAccent shadow-sm'
+                      : 'text-gray-400 hover:text-gray-100 hover:bg-surfaceHover border-transparent lg:border-borderToken/60'
+                  }`}
+                >
+                  <span className="lg:hidden">{item.short}</span>
+                  <span className="hidden lg:inline">{item.label}</span>
+                </button>
+              );
+            })}
           </nav>
         </aside>
 
-        {/* Body */}
         <div className="space-y-16 pb-16">
-          <section className="space-y-5">
-            <SectionHeading id="overview" eyebrow="01 · Overview" title="What is CoffeeTrace?">
+          <section id="overview" className="scroll-mt-28 space-y-5">
+            <SectionHeading eyebrow="01 · Overview" title="What is CoffeeTrace?">
               CoffeeTrace is a coffee supply-chain traceability platform. It records smallholder harvest
               bags, lets operations merge those bags into larger composite lots across multiple tiers, and
-              can still answer — for any final lot — which farmers contributed, how much weight each
+              can still answer, for any final lot, which farmers contributed, how much weight each
               contributed, and from which regions the coffee originated.
             </SectionHeading>
             <div className="grid sm:grid-cols-3 gap-3 text-xs">
@@ -206,8 +260,8 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
             </div>
           </section>
 
-          <section className="space-y-5">
-            <SectionHeading id="purpose" eyebrow="02 · Purpose" title="The problem it solves">
+          <section id="purpose" className="scroll-mt-28 space-y-5">
+            <SectionHeading eyebrow="02 · Purpose" title="The problem it solves">
               In export coffee, many small harvest bags are combined again and again into warehouse lots and
               finally into export lots. Without structured lineage, buyers and auditors cannot reliably
               reconnect a finished lot to the farmers and regions that produced it.
@@ -232,8 +286,8 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
             </div>
           </section>
 
-          <section className="space-y-5">
-            <SectionHeading id="concepts" eyebrow="03 · Concepts" title="Core building blocks">
+          <section id="concepts" className="scroll-mt-28 space-y-5">
+            <SectionHeading eyebrow="03 · Concepts" title="Core building blocks">
               Almost everything in CoffeeTrace is built from three ideas: farmers, bags, and merge
               relations between bags.
             </SectionHeading>
@@ -269,10 +323,10 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
             </div>
           </section>
 
-          <section className="space-y-5">
-            <SectionHeading id="lifecycle" eyebrow="04 · Lifecycle" title="Bag statuses explained">
-              Status tells you what you can still do with a bag. There are four statuses in the system —
-              there is no separate “ACTIVE” status; “active storage” on the dashboard simply means bags
+          <section id="lifecycle" className="scroll-mt-28 space-y-5">
+            <SectionHeading eyebrow="04 · Lifecycle" title="Bag statuses explained">
+              Status tells you what you can still do with a bag. There are four statuses in the system.
+              There is no separate &quot;ACTIVE&quot; status; &quot;active storage&quot; on the dashboard simply means bags
               currently in <span className="font-mono text-sky-300">IN_STORAGE</span>.
             </SectionHeading>
             <div className="space-y-3">
@@ -292,10 +346,10 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
             </div>
           </section>
 
-          <section className="space-y-5">
-            <SectionHeading id="merging" eyebrow="05 · Merging" title="How bag merges work">
+          <section id="merging" className="scroll-mt-28 space-y-5">
+            <SectionHeading eyebrow="05 · Merging" title="How bag merges work">
               Merging is how smaller bags become warehouse and export lots. The platform always creates a
-              <em className="text-gray-100 not-italic"> new</em> target bag code for the result — it does not
+              <em className="text-gray-100 not-italic"> new</em> target bag code for the result. It does not
               silently overwrite an existing lot.
             </SectionHeading>
             <ul className="space-y-3 text-sm text-gray-300">
@@ -314,8 +368,8 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
             </ul>
           </section>
 
-          <section className="space-y-5">
-            <SectionHeading id="traceability" eyebrow="06 · Traceability" title="Backward and forward lineage">
+          <section id="traceability" className="scroll-mt-28 space-y-5">
+            <SectionHeading eyebrow="06 · Traceability" title="Backward and forward lineage">
               Traceability answers two complementary questions from any bag in the graph.
             </SectionHeading>
             <div className="grid sm:grid-cols-2 gap-3">
@@ -346,11 +400,11 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
             </p>
           </section>
 
-          <section className="space-y-5">
-            <SectionHeading id="attribution" eyebrow="07 · Attribution" title="How farmer percentages are calculated">
+          <section id="attribution" className="scroll-mt-28 space-y-5">
+            <SectionHeading eyebrow="07 · Attribution" title="How farmer percentages are calculated">
               Attribution is mass-based. For a selected lot, the system aggregates contributed kilograms that
-              ultimately come from each farmer’s harvest bags, then expresses each share as a percentage of
-              that lot’s initial weight.
+              ultimately come from each farmer&apos;s harvest bags, then expresses each share as a percentage of
+              that lot&apos;s initial weight.
             </SectionHeading>
             <div className="rounded-2xl border border-amberAccent/30 bg-amberAccent/5 p-5 font-mono text-xs text-amber-100/90 space-y-2">
               <p>contributionPercentage = (contributedWeightKg ÷ lot.initialWeightKg) × 100</p>
@@ -361,9 +415,9 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
             </div>
           </section>
 
-          <section className="space-y-5">
-            <SectionHeading id="certificates" eyebrow="08 · Certificates" title="Origin export certificates">
-              Certificates package a lot’s identity and farmer attributions into a printable document for
+          <section id="certificates" className="scroll-mt-28 space-y-5">
+            <SectionHeading eyebrow="08 · Certificates" title="Origin export certificates">
+              Certificates package a lot&apos;s identity and farmer attributions into a printable document for
               demos, audits, and buyer conversations.
             </SectionHeading>
             <ul className="space-y-2 text-sm text-gray-300">
@@ -381,8 +435,8 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
             </ul>
           </section>
 
-          <section className="space-y-6">
-            <SectionHeading id="workflows" eyebrow="09 · Workflows" title="Day-to-day operating workflows">
+          <section id="workflows" className="scroll-mt-28 space-y-6">
+            <SectionHeading eyebrow="09 · Workflows" title="Day-to-day operating workflows">
               These are the main jobs users perform in the product.
             </SectionHeading>
             <div className="space-y-5">
@@ -405,8 +459,8 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
             </div>
           </section>
 
-          <section className="space-y-5">
-            <SectionHeading id="screens" eyebrow="10 · Screens" title="Where to find things in the app">
+          <section id="screens" className="scroll-mt-28 space-y-5">
+            <SectionHeading eyebrow="10 · Screens" title="Where to find things in the app">
               A quick map of the product surfaces.
             </SectionHeading>
             <div className="divide-y divide-borderToken border border-borderToken rounded-2xl overflow-hidden bg-surface/40">
@@ -430,8 +484,8 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
             </div>
           </section>
 
-          <section className="space-y-5">
-            <SectionHeading id="rules" eyebrow="11 · Rules" title="System rules you should know">
+          <section id="rules" className="scroll-mt-28 space-y-5">
+            <SectionHeading eyebrow="11 · Rules" title="System rules you should know">
               These constraints are enforced by the API and reflected in the UI.
             </SectionHeading>
             <div className="space-y-3">
@@ -447,8 +501,8 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
             </div>
           </section>
 
-          <section className="space-y-5">
-            <SectionHeading id="glossary" eyebrow="12 · Glossary" title="Terms used throughout CoffeeTrace">
+          <section id="glossary" className="scroll-mt-28 space-y-5">
+            <SectionHeading eyebrow="12 · Glossary" title="Terms used throughout CoffeeTrace">
               Search or skim the dictionary of product language.
             </SectionHeading>
             <div className="relative">
@@ -457,7 +511,7 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
                 type="search"
                 value={glossaryFilter}
                 onChange={(e) => setGlossaryFilter(e.target.value)}
-                placeholder="Filter terms — e.g. attribution, MERGED, DAG…"
+                placeholder="Filter terms, e.g. attribution, MERGED, DAG..."
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-surface border border-borderToken text-sm text-gray-100 placeholder:text-gray-600 focus:outline-none focus:border-amberAccent/50"
               />
             </div>
@@ -475,9 +529,9 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
             </dl>
           </section>
 
-          <section className="space-y-5">
-            <SectionHeading id="stack" eyebrow="13 · Stack" title="Technical overview (brief)">
-              Useful context for engineers and technical reviewers — not required to operate the product.
+          <section id="stack" className="scroll-mt-28 space-y-5">
+            <SectionHeading eyebrow="13 · Stack" title="Technical overview (brief)">
+              Useful context for engineers and technical reviewers. Not required to operate the product.
             </SectionHeading>
             <div className="rounded-2xl border border-borderToken bg-surface/50 p-5 space-y-3 text-sm text-gray-300 leading-relaxed">
               <p className="flex items-start gap-2">

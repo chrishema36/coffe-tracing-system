@@ -250,7 +250,7 @@ export default function TraceabilityPage({ params }: { params: { id: string } })
             </div>
             {forward.descendantLots.length === 0 ? (
               <p className="p-8 text-center text-xs text-gray-500">
-                No downstream merges yet — this bag has not been merged into another lot.
+                No downstream merges yet. This bag has not been merged into another lot.
               </p>
             ) : (
               <table className="w-full text-left text-sm text-gray-300">

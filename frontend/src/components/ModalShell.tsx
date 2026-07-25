@@ -9,7 +9,7 @@ interface ModalShellProps {
   children: React.ReactNode;
   /** Tailwind max-width class, e.g. max-w-lg */
   maxWidthClass?: string;
-  /** Unused for portal stacking — kept for call-site compatibility */
+  /** Unused for portal stacking - kept for call-site compatibility */
   zClass?: string;
 }
 

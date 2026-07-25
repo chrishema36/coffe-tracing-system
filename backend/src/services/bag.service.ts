@@ -6,7 +6,7 @@ import { CreateBagDTO, MergeBagsDTO } from '../dtos';
 import { PaginatedResult } from '../types';
 import { AppError } from '../middleware/errorHandler';
 
-/** Maximum pagination page size — strictly enforced per SLR assessment spec */
+/** Maximum pagination page size - strictly enforced per SLR assessment spec */
 const MAX_PAGE_SIZE = 5;
 
 export class BagService {

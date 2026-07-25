@@ -100,7 +100,7 @@ function SettingsPageInner() {
   const apiOnline = Boolean(summary) && !isError;
   const checkedAt = dataUpdatedAt
     ? new Date(dataUpdatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-    : '—';
+    : 'n/a';
 
   return (
     <div
@@ -199,7 +199,7 @@ function SettingsPageInner() {
               </div>
             </div>
             <p className="text-[11px] text-gray-500">
-              Stored locally in this browser only — not sent to the server.
+              Stored locally in this browser only. Not sent to the server.
             </p>
           </div>
 
@@ -304,10 +304,10 @@ function SettingsPageInner() {
                 <CheckCircle2 className="w-4 h-4 text-amberAccent" />
               </div>
               <div className="text-xl font-bold font-mono text-amberAccent">
-                {summary?.totalFarmers ?? '—'}
+                {summary?.totalFarmers ?? 'n/a'}
               </div>
               <div className="text-[10px] text-gray-500">
-                Bags: {summary?.totalCoffeeBags ?? '—'}
+                Bags: {summary?.totalCoffeeBags ?? 'n/a'}
               </div>
             </div>
           </div>

@@ -42,7 +42,7 @@ export const CATALOGUE_NAV: CatalogueNavItem[] = [
   { id: 'workflows', label: 'Day-to-day workflows', short: 'Workflows' },
   { id: 'screens', label: 'Where to find things', short: 'Screens' },
   { id: 'rules', label: 'System rules', short: 'Rules' },
-  { id: 'glossary', label: 'Glossary A–Z', short: 'Glossary' },
+  { id: 'glossary', label: 'Glossary A-Z', short: 'Glossary' },
   { id: 'stack', label: 'Technical overview', short: 'Stack' },
 ];
 
@@ -91,7 +91,7 @@ export const GLOSSARY: GlossaryEntry[] = [
   {
     term: 'Backward trace',
     definition:
-      'Walking from a selected lot toward its ancestor bags and leaf farmers — answering “where did this coffee come from?”',
+      'Walking from a selected lot toward its ancestor bags and leaf farmers, answering "where did this coffee come from?"',
   },
   {
     term: 'Child bag',
@@ -131,7 +131,7 @@ export const GLOSSARY: GlossaryEntry[] = [
   {
     term: 'Forward trace',
     definition:
-      'Walking from a bag toward descendant lots — answering “where did this coffee go next?”',
+      'Walking from a bag toward descendant lots, answering "where did this coffee go next?"',
   },
   {
     term: 'Harvest bag',
@@ -233,7 +233,7 @@ export const WORKFLOWS = [
     steps: [
       'From the Farmers table, edit profile fields (code stays fixed).',
       'Delete is allowed only when the farmer has no linked bags. Otherwise reassign or resolve bags first.',
-      'If “Confirm before deleting farmers” is enabled in Settings, a confirmation prompt appears.',
+      'If "Confirm before deleting farmers" is enabled in Settings, a confirmation prompt appears.',
     ],
   },
 ];

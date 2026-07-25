@@ -29,7 +29,7 @@ export interface Farmer {
   _count?: { bags: number };
 }
 
-/** PATCH body — null clears optional fields on the server */
+/** PATCH body - null clears optional fields on the server */
 export type UpdateFarmerPayload = {
   name?: string;
   email?: string | null;

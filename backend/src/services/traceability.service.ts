@@ -9,7 +9,7 @@ export class TraceabilityService {
   constructor(private prisma: PrismaClient) {}
 
   /**
-   * Recursive Backward Trace Engine — BFS Implementation
+   * Recursive Backward Trace Engine - BFS Implementation
    *
    * Traverses parent merge relations all the way down to leaf harvest bags using
    * Breadth-First Search with a global visited Set<string> (O(1) lookups).
@@ -55,7 +55,7 @@ export class TraceabilityService {
       }
     >();
 
-    // Global visited Set — O(1) lookups, prevents re-processing any bag node
+    // Global visited Set - O(1) lookups, prevents re-processing any bag node
     const visited = new Set<string>();
 
     // Add root node
@@ -94,7 +94,7 @@ export class TraceabilityService {
     while (queue.length > 0) {
       const current = queue.shift()!;
 
-      // Hard depth guard — prevents runaway traversal on corrupt/cyclic data
+      // Hard depth guard - prevents runaway traversal on corrupt/cyclic data
       if (current.depth >= MAX_TRACE_DEPTH) {
         console.warn(`⚠️  MAX_TRACE_DEPTH (${MAX_TRACE_DEPTH}) reached at bag ${current.bagId}. Halting deeper traversal.`);
         continue;
@@ -115,7 +115,7 @@ export class TraceabilityService {
 
         // Cycle guard: skip any node already in the global visited set
         if (visited.has(parent.id)) {
-          console.warn(`⚠️  Cycle or duplicate detected — skipping already-visited bag ${parent.bagCode}.`);
+          console.warn(`⚠️  Cycle or duplicate detected - skipping already-visited bag ${parent.bagCode}.`);
           continue;
         }
 
@@ -205,7 +205,7 @@ export class TraceabilityService {
    * in the merge DAG. Uses BFS traversal with a visited Set.
    *
    * When `targetBagId` is null/undefined (brand-new child bag), only duplicate
-   * source IDs can fail — a new node cannot already appear in any ancestry.
+   * source IDs can fail - a new node cannot already appear in any ancestry.
    *
    * Complexity: O(N + E) per source bag where N = ancestors, E = edges.
    */
@@ -248,7 +248,7 @@ export class TraceabilityService {
   }
 
   /**
-   * Forward Trace — BFS from a bag toward descendant composite lots.
+   * Forward Trace - BFS from a bag toward descendant composite lots.
    * Answers: "Which export lots did this harvest/intermediate bag feed into?"
    */
   async getForwardTrace(bagIdOrCode: string): Promise<ForwardTraceResult> {

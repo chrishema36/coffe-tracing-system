@@ -5,7 +5,7 @@ import { Prisma } from '@prisma/client';
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
 /**
- * AppError — typed application error with HTTP status code.
+ * AppError - typed application error with HTTP status code.
  * Use this for expected business-logic failures (404, 400, 409, etc.)
  */
 export class AppError extends Error {
@@ -43,7 +43,7 @@ export const errorHandler = (
     return;
   }
 
-  // 2. Zod validation errors — expose field-level detail safely
+  // 2. Zod validation errors - expose field-level detail safely
   if (err instanceof ZodError) {
     res.status(400).json({
       success: false,
@@ -79,7 +79,7 @@ export const errorHandler = (
     }
   }
 
-  // 4. Unknown / unhandled errors — log internally but never expose in production
+  // 4. Unknown / unhandled errors - log internally but never expose in production
   const errorMessage = err instanceof Error ? err.message : 'An unexpected error occurred.';
   console.error('💥 Unhandled Exception:', err);
 

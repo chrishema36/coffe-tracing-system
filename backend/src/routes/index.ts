@@ -18,7 +18,7 @@ import { createBagRouter } from './bag.routes';
 import { createAnalyticsRouter } from './analytics.routes';
 
 /**
- * Composition Root — all dependency wiring lives here.
+ * Composition Root - all dependency wiring lives here.
  * This is the only place that knows the full object graph.
  * All services receive their dependencies via constructor injection.
  */
@@ -40,7 +40,7 @@ export const createApiRouter = (prisma: PrismaClient): Router => {
   const bagController = new BagController(bagService, traceService);
   const analyticsController = new AnalyticsController(analyticsService);
 
-  // API root — service discovery
+  // API root - service discovery
   apiRouter.get('/', (_req, res) => {
     res.json({
       name: 'CoffeeTrace Traceability System REST API',
@@ -70,7 +70,7 @@ export const createApiRouter = (prisma: PrismaClient): Router => {
 export const swaggerSpec = {
   openapi: '3.0.0',
   info: {
-    title: 'CoffeeTrace — Supply Chain Traceability REST API',
+    title: 'CoffeeTrace - Supply Chain Traceability REST API',
     version: '1.0.0',
     description:
       'Production-grade REST API for the SLR Enterprise Coffee Traceability Platform. ' +
@@ -321,7 +321,7 @@ export const swaggerSpec = {
           },
         },
         responses: {
-          '201': { description: 'Merge executed — new composite bag created' },
+          '201': { description: 'Merge executed - new composite bag created' },
           '400': { description: 'Cycle detected, invalid source bags, or duplicate target code' },
         },
       },

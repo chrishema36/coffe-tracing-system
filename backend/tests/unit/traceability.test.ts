@@ -22,7 +22,7 @@ describe('TraceabilityService (Unit Tests)', () => {
   });
 
   // -----------------------------------------------------------------------
-  // getBackwardTrace — Happy Path
+  // getBackwardTrace - Happy Path
   // -----------------------------------------------------------------------
   describe('getBackwardTrace()', () => {
     it('should throw AppError 404 when target bag is not found', async () => {
@@ -214,7 +214,7 @@ describe('TraceabilityService (Unit Tests)', () => {
   });
 
   // -----------------------------------------------------------------------
-  // checkCycle — Cycle Detection Tests
+  // checkCycle - Cycle Detection Tests
   // -----------------------------------------------------------------------
   describe('checkCycle()', () => {
     it('should return false for a brand-new target (null id) with unique sources', async () => {
