@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { fetchFarmerById, fetchFarmers } from '../lib/api';
+import { useMemo, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { deleteFarmer, fetchDashboardSummary, fetchFarmerById, fetchFarmers } from '../lib/api';
 import {
   ChevronLeft,
   ChevronRight,
@@ -14,21 +14,27 @@ import {
   PlusCircle,
   MoreVertical,
   Eye,
-  Award,
+  Edit2,
+  Trash2,
   Scale,
   Calendar,
   TrendingUp,
 } from 'lucide-react';
 import { LogBagModal } from './LogBagModal';
 import { FarmerProfileDrawer } from './FarmerProfileDrawer';
+import { EditFarmerModal } from './EditFarmerModal';
 import { Farmer } from '../types';
+import { useToast } from '../context/ToastContext';
 
 export function FarmersTable() {
+  const toast = useToast();
+  const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [selectedFarmer, setSelectedFarmer] = useState<Farmer | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isLogBagOpen, setIsLogBagOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [openKebabId, setOpenKebabId] = useState<string | null>(null);
 
   const limit = 5; // Strict requirement!
@@ -38,10 +44,25 @@ export function FarmersTable() {
     queryFn: () => fetchFarmers(page, limit),
   });
 
+  const { data: summaryData } = useQuery({
+    queryKey: ['dashboardSummary'],
+    queryFn: fetchDashboardSummary,
+  });
+
   const allFarmers = data?.data || [];
   const meta = data?.pagination;
+  const summary = summaryData?.data;
 
-  // Filter client side if search is entered
+  const avgBagWeight = useMemo(() => {
+    if (!summary?.totalCoffeeBags) return 0;
+    return summary.totalCoffeeVolumeKg / summary.totalCoffeeBags;
+  }, [summary]);
+
+  const peakVarietyVolume = useMemo(() => {
+    if (!summary?.varietyBreakdown?.length) return 0;
+    return Math.max(...summary.varietyBreakdown.map((v) => v.volumeKg || 0));
+  }, [summary]);
+
   const farmers = search
     ? allFarmers.filter(
         (f) =>
@@ -50,6 +71,21 @@ export function FarmersTable() {
           f.region.toLowerCase().includes(search.toLowerCase())
       )
     : allFarmers;
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteFarmer(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['farmers'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboardSummary'] });
+      toast.success('Farmer deleted', 'Producer record removed successfully.');
+    },
+    onError: (err: any) => {
+      toast.error(
+        'Delete blocked',
+        err.response?.data?.message || 'Unable to delete this farmer.'
+      );
+    },
+  });
 
   const handleOpenDrawer = async (farmer: Farmer) => {
     setSelectedFarmer(farmer);
@@ -69,6 +105,27 @@ export function FarmersTable() {
     setOpenKebabId(null);
   };
 
+  const handleEditFarmer = (farmer: Farmer) => {
+    setSelectedFarmer(farmer);
+    setIsEditOpen(true);
+    setOpenKebabId(null);
+  };
+
+  const handleDeleteFarmer = (farmer: Farmer) => {
+    setOpenKebabId(null);
+    const bagCount = farmer._count?.bags ?? 0;
+    if (bagCount > 0) {
+      toast.error(
+        'Delete blocked',
+        `${farmer.name} still has ${bagCount} linked bag(s). Remove or reassign bags first.`
+      );
+      return;
+    }
+    if (window.confirm(`Delete farmer ${farmer.name} (${farmer.code})? This cannot be undone.`)) {
+      deleteMutation.mutate(farmer.id);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* High Level Farmer Statistics Bar */}
@@ -78,17 +135,24 @@ export function FarmersTable() {
             <span className="font-extrabold uppercase text-[10px]">Lifetime Farmers</span>
             <User className="w-4 h-4 text-amberAccent" />
           </div>
-          <div className="text-2xl font-black font-mono text-gray-100">{meta?.totalRecords || allFarmers.length}</div>
+          <div className="text-2xl font-black font-mono text-gray-100">
+            {summary?.totalFarmers ?? meta?.totalRecords ?? allFarmers.length}
+          </div>
           <div className="text-[10px] text-amberAccent font-bold">Registered Producers</div>
         </div>
 
         <div className="p-4 rounded-2xl border border-borderToken bg-surface/90 space-y-1 border-t-2 border-t-emerald-400 shadow-lg">
           <div className="flex items-center justify-between text-xs text-gray-400">
-            <span className="font-extrabold uppercase text-[10px]">Highest Regional Yield</span>
+            <span className="font-extrabold uppercase text-[10px]">Total Logged Volume</span>
             <TrendingUp className="w-4 h-4 text-emerald-400" />
           </div>
-          <div className="text-2xl font-black font-mono text-emerald-400">250 <span className="text-xs font-normal">kg</span></div>
-          <div className="text-[10px] text-emerald-400 font-bold">Peak Lot Volume</div>
+          <div className="text-2xl font-black font-mono text-emerald-400">
+            {(summary?.totalCoffeeVolumeKg ?? 0).toFixed(0)}{' '}
+            <span className="text-xs font-normal">kg</span>
+          </div>
+          <div className="text-[10px] text-emerald-400 font-bold">
+            Peak variety lot {peakVarietyVolume.toFixed(0)} kg
+          </div>
         </div>
 
         <div className="p-4 rounded-2xl border border-borderToken bg-surface/90 space-y-1 border-t-2 border-t-sky-400 shadow-lg">
@@ -96,17 +160,23 @@ export function FarmersTable() {
             <span className="font-extrabold uppercase text-[10px]">Average Bag Weight</span>
             <Scale className="w-4 h-4 text-sky-400" />
           </div>
-          <div className="text-2xl font-black font-mono text-sky-400">62.5 <span className="text-xs font-normal">kg</span></div>
-          <div className="text-[10px] text-sky-400 font-bold">Standard Weight Standard</div>
+          <div className="text-2xl font-black font-mono text-sky-400">
+            {avgBagWeight.toFixed(1)} <span className="text-xs font-normal">kg</span>
+          </div>
+          <div className="text-[10px] text-sky-400 font-bold">
+            Across {summary?.totalCoffeeBags ?? 0} bags
+          </div>
         </div>
 
         <div className="p-4 rounded-2xl border border-borderToken bg-surface/90 space-y-1 border-t-2 border-t-purple-400 shadow-lg">
           <div className="flex items-center justify-between text-xs text-gray-400">
-            <span className="font-extrabold uppercase text-[10px]">First & Latest Harvest</span>
+            <span className="font-extrabold uppercase text-[10px]">Active Storage Lots</span>
             <Calendar className="w-4 h-4 text-purple-400" />
           </div>
-          <div className="text-sm font-black font-mono text-purple-400">Jan 2026 – Jul 2026</div>
-          <div className="text-[10px] text-purple-400 font-bold">Active Crop Season</div>
+          <div className="text-2xl font-black font-mono text-purple-400">
+            {summary?.activeStorageBagsCount ?? 0}
+          </div>
+          <div className="text-[10px] text-purple-400 font-bold">Ready for merge / export</div>
         </div>
       </div>
 
@@ -257,6 +327,24 @@ export function FarmersTable() {
                             <PlusCircle className="w-3.5 h-3.5 text-emerald-400" />
                             <span>Log Harvest Bag</span>
                           </button>
+
+                          <button
+                            onClick={() => handleEditFarmer(farmer)}
+                            className="w-full flex items-center space-x-2 px-3.5 py-2 hover:bg-surfaceHover text-sky-400 text-left transition-colors"
+                          >
+                            <Edit2 className="w-3.5 h-3.5 text-sky-400" />
+                            <span>Edit Farmer</span>
+                          </button>
+
+                          <div className="border-t border-borderToken/60 my-1" />
+
+                          <button
+                            onClick={() => handleDeleteFarmer(farmer)}
+                            className="w-full flex items-center space-x-2 px-3.5 py-2 hover:bg-red-500/10 text-red-400 text-left transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                            <span>Delete Farmer</span>
+                          </button>
                         </div>
                       )}
                     </td>
@@ -304,6 +392,11 @@ export function FarmersTable() {
       </div>
 
       <LogBagModal isOpen={isLogBagOpen} onClose={() => setIsLogBagOpen(false)} />
+      <EditFarmerModal
+        isOpen={isEditOpen}
+        onClose={() => setIsEditOpen(false)}
+        farmer={selectedFarmer}
+      />
       <FarmerProfileDrawer
         farmer={selectedFarmer}
         isOpen={isDrawerOpen}

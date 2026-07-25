@@ -1,5 +1,5 @@
-import { PrismaClient, Farmer } from '@prisma/client';
-import { CreateFarmerDTO } from '../dtos';
+import { PrismaClient, Farmer, Prisma } from '@prisma/client';
+import { CreateFarmerDTO, UpdateFarmerDTO } from '../dtos';
 import { PaginatedResult } from '../types';
 
 export class FarmerRepository {
@@ -9,6 +9,26 @@ export class FarmerRepository {
     return this.prisma.farmer.create({
       data,
     });
+  }
+
+  async update(id: string, data: UpdateFarmerDTO): Promise<Farmer> {
+    return this.prisma.farmer.update({
+      where: { id },
+      data: data as Prisma.FarmerUpdateInput,
+      include: {
+        _count: { select: { bags: true } },
+      },
+    });
+  }
+
+  async delete(id: string): Promise<Farmer> {
+    return this.prisma.farmer.delete({
+      where: { id },
+    });
+  }
+
+  async countBags(farmerId: string): Promise<number> {
+    return this.prisma.coffeeBag.count({ where: { farmerId } });
   }
 
   async findById(id: string): Promise<Farmer | null> {

@@ -8,6 +8,9 @@ describe('FarmerService (Unit Tests)', () => {
   beforeEach(() => {
     mockFarmerRepo = {
       create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+      countBags: jest.fn(),
       findById: jest.fn(),
       findByCode: jest.fn(),
       findAll: jest.fn(),
@@ -88,6 +91,45 @@ describe('FarmerService (Unit Tests)', () => {
       await farmerService.getAllFarmers(1, 100);
 
       expect(mockFarmerRepo.findAll).toHaveBeenCalledWith(1, 5, undefined);
+    });
+  });
+
+  describe('updateFarmer()', () => {
+    it('should update an existing farmer', async () => {
+      mockFarmerRepo.findById.mockResolvedValue({ id: 'uuid-1', code: 'FRM-001', name: 'Old' });
+      mockFarmerRepo.update.mockResolvedValue({ id: 'uuid-1', code: 'FRM-001', name: 'New Name' });
+
+      const result = await farmerService.updateFarmer('uuid-1', { name: 'New Name' });
+
+      expect(mockFarmerRepo.update).toHaveBeenCalledWith('uuid-1', { name: 'New Name' });
+      expect(result.name).toBe('New Name');
+    });
+
+    it('should throw 404 when farmer is missing', async () => {
+      mockFarmerRepo.findById.mockResolvedValue(null);
+      await expect(farmerService.updateFarmer('missing', { name: 'X' })).rejects.toMatchObject({
+        statusCode: 404,
+      });
+    });
+  });
+
+  describe('deleteFarmer()', () => {
+    it('should delete a farmer with no linked bags', async () => {
+      mockFarmerRepo.findById.mockResolvedValue({ id: 'uuid-1', code: 'FRM-001' });
+      mockFarmerRepo.countBags.mockResolvedValue(0);
+      mockFarmerRepo.delete.mockResolvedValue({ id: 'uuid-1' });
+
+      await farmerService.deleteFarmer('uuid-1');
+
+      expect(mockFarmerRepo.delete).toHaveBeenCalledWith('uuid-1');
+    });
+
+    it('should reject delete when bags are still linked', async () => {
+      mockFarmerRepo.findById.mockResolvedValue({ id: 'uuid-1', code: 'FRM-001' });
+      mockFarmerRepo.countBags.mockResolvedValue(3);
+
+      await expect(farmerService.deleteFarmer('uuid-1')).rejects.toMatchObject({ statusCode: 409 });
+      expect(mockFarmerRepo.delete).not.toHaveBeenCalled();
     });
   });
 });

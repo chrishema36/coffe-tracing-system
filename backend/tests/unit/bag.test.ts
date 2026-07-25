@@ -148,25 +148,40 @@ describe('BagService (Unit Tests)', () => {
   // mergeBags()
   // -----------------------------------------------------------------------
   describe('mergeBags()', () => {
+    const sources = [
+      { bagId: '550e8400-e29b-41d4-a716-446655440001' },
+      { bagId: '550e8400-e29b-41d4-a716-446655440002' },
+    ];
+
     it('should throw AppError 409 if target bag code already exists', async () => {
       mockBagRepo.findByCode.mockResolvedValue({ id: 'existing-id', bagCode: 'EXPORT-EXISTING' });
 
       await expect(
         bagService.mergeBags({
           targetBagCode: 'EXPORT-EXISTING',
-          sourceBagIds: ['source-1', 'source-2'],
+          sources: [
+            { bagId: '550e8400-e29b-41d4-a716-446655440001' },
+            { bagId: '550e8400-e29b-41d4-a716-446655440002' },
+          ],
         })
       ).rejects.toMatchObject({ statusCode: 409 });
     });
 
     it('should throw AppError 404 if source bags not found', async () => {
-      mockBagRepo.findByCode.mockResolvedValue(null); // target is free
-      mockBagRepo.findManyByIds.mockResolvedValue([{ id: 'source-1', bagCode: 'BAG-1', status: 'HARVESTED', currentWeightKg: 50 }]); // only 1 of 2 found
+      mockBagRepo.findByCode.mockResolvedValue(null);
+      mockBagRepo.findManyByIds.mockResolvedValue([
+        {
+          id: '550e8400-e29b-41d4-a716-446655440001',
+          bagCode: 'BAG-1',
+          status: 'HARVESTED',
+          currentWeightKg: 50,
+        },
+      ]);
 
       await expect(
         bagService.mergeBags({
           targetBagCode: 'NEW-LOT',
-          sourceBagIds: ['source-1', 'source-2'],
+          sources,
         })
       ).rejects.toMatchObject({ statusCode: 404 });
     });
@@ -174,14 +189,24 @@ describe('BagService (Unit Tests)', () => {
     it('should throw AppError 400 if a source bag is already MERGED', async () => {
       mockBagRepo.findByCode.mockResolvedValue(null);
       mockBagRepo.findManyByIds.mockResolvedValue([
-        { id: 'source-1', bagCode: 'BAG-1', status: 'MERGED', currentWeightKg: 0 },
-        { id: 'source-2', bagCode: 'BAG-2', status: 'HARVESTED', currentWeightKg: 50 },
+        {
+          id: '550e8400-e29b-41d4-a716-446655440001',
+          bagCode: 'BAG-1',
+          status: 'MERGED',
+          currentWeightKg: 0,
+        },
+        {
+          id: '550e8400-e29b-41d4-a716-446655440002',
+          bagCode: 'BAG-2',
+          status: 'HARVESTED',
+          currentWeightKg: 50,
+        },
       ]);
 
       await expect(
         bagService.mergeBags({
           targetBagCode: 'NEW-LOT',
-          sourceBagIds: ['source-1', 'source-2'],
+          sources,
         })
       ).rejects.toMatchObject({ statusCode: 400 });
     });
@@ -189,14 +214,54 @@ describe('BagService (Unit Tests)', () => {
     it('should throw AppError 400 if a source bag has zero weight', async () => {
       mockBagRepo.findByCode.mockResolvedValue(null);
       mockBagRepo.findManyByIds.mockResolvedValue([
-        { id: 'source-1', bagCode: 'BAG-1', status: 'HARVESTED', currentWeightKg: 0 },
-        { id: 'source-2', bagCode: 'BAG-2', status: 'HARVESTED', currentWeightKg: 50 },
+        {
+          id: '550e8400-e29b-41d4-a716-446655440001',
+          bagCode: 'BAG-1',
+          status: 'HARVESTED',
+          currentWeightKg: 0,
+        },
+        {
+          id: '550e8400-e29b-41d4-a716-446655440002',
+          bagCode: 'BAG-2',
+          status: 'HARVESTED',
+          currentWeightKg: 50,
+        },
       ]);
 
       await expect(
         bagService.mergeBags({
           targetBagCode: 'NEW-LOT',
-          sourceBagIds: ['source-1', 'source-2'],
+          sources,
+        })
+      ).rejects.toMatchObject({ statusCode: 400 });
+    });
+
+    it('should throw AppError 400 if requested weight exceeds available', async () => {
+      mockBagRepo.findByCode.mockResolvedValue(null);
+      mockBagRepo.findManyByIds.mockResolvedValue([
+        {
+          id: '550e8400-e29b-41d4-a716-446655440001',
+          bagCode: 'BAG-1',
+          status: 'HARVESTED',
+          currentWeightKg: 40,
+          variety: 'BOURBON',
+        },
+        {
+          id: '550e8400-e29b-41d4-a716-446655440002',
+          bagCode: 'BAG-2',
+          status: 'HARVESTED',
+          currentWeightKg: 50,
+          variety: 'BOURBON',
+        },
+      ]);
+
+      await expect(
+        bagService.mergeBags({
+          targetBagCode: 'PARTIAL-LOT',
+          sources: [
+            { bagId: '550e8400-e29b-41d4-a716-446655440001', weightUsedKg: 55 },
+            { bagId: '550e8400-e29b-41d4-a716-446655440002', weightUsedKg: 20 },
+          ],
         })
       ).rejects.toMatchObject({ statusCode: 400 });
     });
@@ -204,38 +269,112 @@ describe('BagService (Unit Tests)', () => {
     it('should throw AppError 400 if cycle detection returns true', async () => {
       mockBagRepo.findByCode.mockResolvedValue(null);
       mockBagRepo.findManyByIds.mockResolvedValue([
-        { id: 'source-1', bagCode: 'BAG-1', status: 'HARVESTED', currentWeightKg: 50, variety: 'BOURBON' },
-        { id: 'source-2', bagCode: 'BAG-2', status: 'HARVESTED', currentWeightKg: 50, variety: 'BOURBON' },
+        {
+          id: '550e8400-e29b-41d4-a716-446655440001',
+          bagCode: 'BAG-1',
+          status: 'HARVESTED',
+          currentWeightKg: 50,
+          variety: 'BOURBON',
+        },
+        {
+          id: '550e8400-e29b-41d4-a716-446655440002',
+          bagCode: 'BAG-2',
+          status: 'HARVESTED',
+          currentWeightKg: 50,
+          variety: 'BOURBON',
+        },
       ]);
       mockTraceService.checkCycle.mockResolvedValue(true);
 
       await expect(
         bagService.mergeBags({
           targetBagCode: 'CYCLE-LOT',
-          sourceBagIds: ['source-1', 'source-2'],
+          sources,
         })
       ).rejects.toMatchObject({ statusCode: 400 });
     });
 
-    it('should successfully execute merge and call createMerge with correct weight sum', async () => {
-      const mockMergedBag = { id: 'merged-1', bagCode: 'MERGED-LOT', status: 'IN_STORAGE', initialWeightKg: 110 };
+    it('should successfully execute merge and call createMerge with contributions', async () => {
+      const mockMergedBag = {
+        id: 'merged-1',
+        bagCode: 'MERGED-LOT',
+        status: 'IN_STORAGE',
+        initialWeightKg: 110,
+      };
       mockBagRepo.findByCode.mockResolvedValue(null);
       mockBagRepo.findManyByIds.mockResolvedValue([
-        { id: 'source-1', bagCode: 'BAG-1', status: 'HARVESTED', currentWeightKg: 60, variety: 'BOURBON' },
-        { id: 'source-2', bagCode: 'BAG-2', status: 'IN_STORAGE', currentWeightKg: 50, variety: 'BOURBON' },
+        {
+          id: '550e8400-e29b-41d4-a716-446655440001',
+          bagCode: 'BAG-1',
+          status: 'HARVESTED',
+          currentWeightKg: 60,
+          variety: 'BOURBON',
+        },
+        {
+          id: '550e8400-e29b-41d4-a716-446655440002',
+          bagCode: 'BAG-2',
+          status: 'IN_STORAGE',
+          currentWeightKg: 50,
+          variety: 'BOURBON',
+        },
       ]);
       mockTraceService.checkCycle.mockResolvedValue(false);
       mockBagRepo.createMerge.mockResolvedValue(mockMergedBag);
 
       const result = await bagService.mergeBags({
         targetBagCode: 'MERGED-LOT',
-        sourceBagIds: ['source-1', 'source-2'],
+        sources,
       });
 
       expect(result.bagCode).toBe('MERGED-LOT');
       expect(mockBagRepo.createMerge).toHaveBeenCalledWith(
-        ['source-1', 'source-2'],
+        [
+          { bagId: '550e8400-e29b-41d4-a716-446655440001', weightUsedKg: 60 },
+          { bagId: '550e8400-e29b-41d4-a716-446655440002', weightUsedKg: 50 },
+        ],
         expect.objectContaining({ bagCode: 'MERGED-LOT', initialWeightKg: 110 })
+      );
+    });
+
+    it('should support partial weight contributions', async () => {
+      mockBagRepo.findByCode.mockResolvedValue(null);
+      mockBagRepo.findManyByIds.mockResolvedValue([
+        {
+          id: '550e8400-e29b-41d4-a716-446655440001',
+          bagCode: 'BAG-1',
+          status: 'HARVESTED',
+          currentWeightKg: 60,
+          variety: 'BOURBON',
+        },
+        {
+          id: '550e8400-e29b-41d4-a716-446655440002',
+          bagCode: 'BAG-2',
+          status: 'HARVESTED',
+          currentWeightKg: 50,
+          variety: 'BOURBON',
+        },
+      ]);
+      mockTraceService.checkCycle.mockResolvedValue(false);
+      mockBagRepo.createMerge.mockResolvedValue({
+        id: 'merged-2',
+        bagCode: 'PARTIAL-LOT',
+        initialWeightKg: 45,
+      });
+
+      await bagService.mergeBags({
+        targetBagCode: 'PARTIAL-LOT',
+        sources: [
+          { bagId: '550e8400-e29b-41d4-a716-446655440001', weightUsedKg: 25 },
+          { bagId: '550e8400-e29b-41d4-a716-446655440002', weightUsedKg: 20 },
+        ],
+      });
+
+      expect(mockBagRepo.createMerge).toHaveBeenCalledWith(
+        [
+          { bagId: '550e8400-e29b-41d4-a716-446655440001', weightUsedKg: 25 },
+          { bagId: '550e8400-e29b-41d4-a716-446655440002', weightUsedKg: 20 },
+        ],
+        expect.objectContaining({ initialWeightKg: 45 })
       );
     });
   });

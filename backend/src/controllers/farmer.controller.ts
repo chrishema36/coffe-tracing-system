@@ -52,4 +52,34 @@ export class FarmerController {
       next(error);
     }
   };
+
+  updateFarmer = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const farmer = await this.farmerService.updateFarmer(req.params.id, req.body);
+      const response: ApiResponse<typeof farmer> = {
+        success: true,
+        message: 'Farmer updated successfully',
+        data: farmer,
+        timestamp: new Date().toISOString(),
+      };
+      res.status(200).json(response);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  deleteFarmer = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      await this.farmerService.deleteFarmer(req.params.id);
+      const response: ApiResponse<null> = {
+        success: true,
+        message: 'Farmer deleted successfully',
+        data: null,
+        timestamp: new Date().toISOString(),
+      };
+      res.status(200).json(response);
+    } catch (error) {
+      next(error);
+    }
+  };
 }

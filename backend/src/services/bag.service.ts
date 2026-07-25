@@ -17,13 +17,11 @@ export class BagService {
   ) {}
 
   async createBag(data: CreateBagDTO): Promise<CoffeeBag> {
-    // 1. Verify referenced farmer exists
     const farmer = await this.farmerRepo.findById(data.farmerId);
     if (!farmer) {
       throw new AppError(404, `Farmer with ID '${data.farmerId}' not found.`);
     }
 
-    // 2. Enforce unique bag code
     const existing = await this.bagRepo.findByCode(data.bagCode);
     if (existing) {
       throw new AppError(409, `Coffee bag with code '${data.bagCode}' already exists.`);
@@ -52,23 +50,30 @@ export class BagService {
   }
 
   async mergeBags(data: MergeBagsDTO): Promise<CoffeeBag> {
-    // 1. Ensure target bag code is not already taken
     const existingTarget = await this.bagRepo.findByCode(data.targetBagCode);
     if (existingTarget) {
       throw new AppError(409, `Target bag code '${data.targetBagCode}' already exists.`);
     }
 
-    // 2. Resolve and validate all source bags
-    const sourceBags = await this.bagRepo.findManyByIds(data.sourceBagIds);
-    if (sourceBags.length !== data.sourceBagIds.length) {
+    const sourceIds = data.sources.map((s) => s.bagId);
+    if (new Set(sourceIds).size !== sourceIds.length) {
+      throw new AppError(400, 'Duplicate source bags are not allowed in a merge.');
+    }
+
+    const sourceBags = await this.bagRepo.findManyByIds(sourceIds);
+    if (sourceBags.length !== sourceIds.length) {
       const foundIds = new Set(sourceBags.map((b) => b.id));
-      const missing = data.sourceBagIds.filter((id) => !foundIds.has(id));
+      const missing = sourceIds.filter((id) => !foundIds.has(id));
       throw new AppError(404, `Source bags not found: ${missing.join(', ')}`);
     }
 
-    // 3. Validate each source bag is eligible for merge
-    for (const bag of sourceBags) {
-      if (bag.status === BagStatus.MERGED) {
+    const bagById = new Map(sourceBags.map((b) => [b.id, b]));
+    const contributions: { bagId: string; weightUsedKg: number }[] = [];
+
+    for (const source of data.sources) {
+      const bag = bagById.get(source.bagId)!;
+
+      if (bag.status === BagStatus.MERGED && bag.currentWeightKg <= 0) {
         throw new AppError(
           400,
           `Bag '${bag.bagCode}' has already been fully merged and cannot be re-merged.`
@@ -80,13 +85,19 @@ export class BagService {
       if (bag.currentWeightKg <= 0) {
         throw new AppError(400, `Bag '${bag.bagCode}' has zero available weight for merging.`);
       }
+
+      const weightUsed = source.weightUsedKg ?? bag.currentWeightKg;
+      if (weightUsed > bag.currentWeightKg + 1e-9) {
+        throw new AppError(
+          400,
+          `Bag '${bag.bagCode}' only has ${bag.currentWeightKg} kg available; requested ${weightUsed} kg.`
+        );
+      }
+
+      contributions.push({ bagId: bag.id, weightUsedKg: weightUsed });
     }
 
-    // 4. Pre-merge cycle detection
-    // Target bag is always newly created (409 above if code exists), so the new child
-    // cannot already sit in any source's ancestry. Pass null for target id.
-    // Still rejects duplicate source IDs and would catch merges into an existing bag id.
-    const hasCycle = await this.traceService.checkCycle(data.sourceBagIds, null);
+    const hasCycle = await this.traceService.checkCycle(sourceIds, null);
     if (hasCycle) {
       throw new AppError(
         400,
@@ -94,12 +105,10 @@ export class BagService {
       );
     }
 
-    // 5. Calculate composite target weight
-    const totalWeightKg = sourceBags.reduce((sum, bag) => sum + bag.currentWeightKg, 0);
+    const totalWeightKg = contributions.reduce((sum, c) => sum + c.weightUsedKg, 0);
     const variety = data.variety ?? sourceBags[0].variety;
 
-    // 6. Execute atomic merge transaction
-    return this.bagRepo.createMerge(data.sourceBagIds, {
+    return this.bagRepo.createMerge(contributions, {
       bagCode: data.targetBagCode,
       initialWeightKg: totalWeightKg,
       variety,

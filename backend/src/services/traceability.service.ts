@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { AppError } from '../middleware/errorHandler';
-import { TraceabilityResult, FarmerAttribution, TraceGraphNode, TraceGraphEdge } from '../types';
+import { TraceabilityResult, FarmerAttribution, TraceGraphNode, TraceGraphEdge, ForwardTraceResult } from '../types';
 
 /** Maximum traversal depth to prevent runaway recursion on pathological data */
 const MAX_TRACE_DEPTH = 100;
@@ -245,5 +245,115 @@ export class TraceabilityService {
     }
 
     return false;
+  }
+
+  /**
+   * Forward Trace — BFS from a bag toward descendant composite lots.
+   * Answers: "Which export lots did this harvest/intermediate bag feed into?"
+   */
+  async getForwardTrace(bagIdOrCode: string): Promise<ForwardTraceResult> {
+    const rootBag = await this.prisma.coffeeBag.findFirst({
+      where: {
+        OR: [{ id: bagIdOrCode }, { bagCode: bagIdOrCode }],
+      },
+      include: { farmer: true },
+    });
+
+    if (!rootBag) {
+      throw new AppError(404, `Coffee bag with identifier '${bagIdOrCode}' was not found.`);
+    }
+
+    const graphNodes = new Map<string, TraceGraphNode>();
+    const graphEdges = new Map<string, TraceGraphEdge>();
+    const descendantLots: ForwardTraceResult['descendantLots'] = [];
+
+    graphNodes.set(rootBag.id, {
+      id: rootBag.id,
+      bagCode: rootBag.bagCode,
+      initialWeightKg: rootBag.initialWeightKg,
+      currentWeightKg: rootBag.currentWeightKg,
+      status: rootBag.status,
+      variety: rootBag.variety,
+      qualityScore: rootBag.qualityScore,
+      farmerId: rootBag.farmerId,
+      farmerName: rootBag.farmer?.name ?? null,
+      farmerRegion: rootBag.farmer?.region ?? null,
+      depth: 0,
+    });
+
+    const visited = new Set<string>([rootBag.id]);
+    const queue: { bagId: string; depth: number }[] = [{ bagId: rootBag.id, depth: 0 }];
+
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      if (current.depth >= MAX_TRACE_DEPTH) continue;
+
+      const childRelations = await this.prisma.mergeRelation.findMany({
+        where: { parentBagId: current.bagId },
+        include: {
+          childBag: { include: { farmer: true } },
+        },
+      });
+
+      for (const rel of childRelations) {
+        const child = rel.childBag;
+        const edgeId = `edge-${current.bagId}-${child.id}`;
+        graphEdges.set(edgeId, {
+          id: edgeId,
+          sourceBagId: current.bagId,
+          targetBagId: child.id,
+          weightUsedKg: rel.weightUsedKg,
+        });
+
+        if (visited.has(child.id)) continue;
+        visited.add(child.id);
+
+        const depth = current.depth + 1;
+        graphNodes.set(child.id, {
+          id: child.id,
+          bagCode: child.bagCode,
+          initialWeightKg: child.initialWeightKg,
+          currentWeightKg: child.currentWeightKg,
+          status: child.status,
+          variety: child.variety,
+          qualityScore: child.qualityScore,
+          farmerId: child.farmerId,
+          farmerName: child.farmer?.name ?? null,
+          farmerRegion: child.farmer?.region ?? null,
+          depth,
+        });
+
+        descendantLots.push({
+          id: child.id,
+          bagCode: child.bagCode,
+          status: child.status,
+          variety: child.variety,
+          currentWeightKg: child.currentWeightKg,
+          weightReceivedKg: rel.weightUsedKg,
+          depth,
+        });
+
+        queue.push({ bagId: child.id, depth });
+      }
+    }
+
+    descendantLots.sort((a, b) => a.depth - b.depth || a.bagCode.localeCompare(b.bagCode));
+
+    return {
+      sourceBag: {
+        id: rootBag.id,
+        bagCode: rootBag.bagCode,
+        currentWeightKg: rootBag.currentWeightKg,
+        initialWeightKg: rootBag.initialWeightKg,
+        status: rootBag.status,
+        variety: rootBag.variety,
+        farmerId: rootBag.farmerId,
+        farmerName: rootBag.farmer?.name ?? null,
+      },
+      totalDescendantLots: descendantLots.length,
+      descendantLots,
+      graphNodes: Array.from(graphNodes.values()),
+      graphEdges: Array.from(graphEdges.values()),
+    };
   }
 }

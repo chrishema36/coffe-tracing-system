@@ -72,6 +72,31 @@ export interface TraceabilityResult {
   graphEdges: TraceGraphEdge[];
 }
 
+export interface ForwardTraceResult {
+  sourceBag: {
+    id: string;
+    bagCode: string;
+    currentWeightKg: number;
+    initialWeightKg: number;
+    status: string;
+    variety: string;
+    farmerId?: string | null;
+    farmerName?: string | null;
+  };
+  totalDescendantLots: number;
+  descendantLots: {
+    id: string;
+    bagCode: string;
+    status: string;
+    variety: string;
+    currentWeightKg: number;
+    weightReceivedKg: number;
+    depth: number;
+  }[];
+  graphNodes: TraceGraphNode[];
+  graphEdges: TraceGraphEdge[];
+}
+
 export interface DashboardSummary {
   totalFarmers: number;
   totalCoffeeBags: number;

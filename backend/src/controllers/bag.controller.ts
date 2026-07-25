@@ -87,4 +87,18 @@ export class BagController {
       next(error);
     }
   };
+
+  getBagForwardTrace = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const traceResult = await this.traceService.getForwardTrace(req.params.id);
+      const response: ApiResponse<typeof traceResult> = {
+        success: true,
+        data: traceResult,
+        timestamp: new Date().toISOString(),
+      };
+      res.status(200).json(response);
+    } catch (error) {
+      next(error);
+    }
+  };
 }

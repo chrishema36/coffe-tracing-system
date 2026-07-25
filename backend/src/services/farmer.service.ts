@@ -1,6 +1,6 @@
 import { Farmer } from '@prisma/client';
 import { FarmerRepository } from '../repositories/farmer.repository';
-import { CreateFarmerDTO } from '../dtos';
+import { CreateFarmerDTO, UpdateFarmerDTO } from '../dtos';
 import { PaginatedResult } from '../types';
 import { AppError } from '../middleware/errorHandler';
 
@@ -17,6 +17,31 @@ export class FarmerService {
       throw new AppError(409, `Farmer with code '${data.code}' already exists.`);
     }
     return this.farmerRepo.create(data);
+  }
+
+  async updateFarmer(idOrCode: string, data: UpdateFarmerDTO): Promise<Farmer> {
+    const farmer = await this.farmerRepo.findById(idOrCode);
+    if (!farmer) {
+      throw new AppError(404, `Farmer with ID or code '${idOrCode}' not found.`);
+    }
+    return this.farmerRepo.update(farmer.id, data);
+  }
+
+  async deleteFarmer(idOrCode: string): Promise<void> {
+    const farmer = await this.farmerRepo.findById(idOrCode);
+    if (!farmer) {
+      throw new AppError(404, `Farmer with ID or code '${idOrCode}' not found.`);
+    }
+
+    const bagCount = await this.farmerRepo.countBags(farmer.id);
+    if (bagCount > 0) {
+      throw new AppError(
+        409,
+        `Cannot delete farmer '${farmer.code}': ${bagCount} coffee bag(s) are still linked. Reassign or archive bags first.`
+      );
+    }
+
+    await this.farmerRepo.delete(farmer.id);
   }
 
   async getFarmerById(id: string): Promise<Farmer> {

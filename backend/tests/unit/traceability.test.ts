@@ -271,4 +271,49 @@ describe('TraceabilityService (Unit Tests)', () => {
       expect(isCycle).toBe(true);
     });
   });
+
+  describe('getForwardTrace()', () => {
+    it('should throw 404 when bag is not found', async () => {
+      mockPrisma.coffeeBag.findFirst.mockResolvedValue(null);
+      await expect(traceService.getForwardTrace('MISSING')).rejects.toMatchObject({ statusCode: 404 });
+    });
+
+    it('should return descendant lots for a harvest bag', async () => {
+      mockPrisma.coffeeBag.findFirst.mockResolvedValue({
+        id: 'bag-a',
+        bagCode: 'BAG-A',
+        initialWeightKg: 50,
+        currentWeightKg: 0,
+        status: 'MERGED',
+        variety: 'ARABICA',
+        qualityScore: 90,
+        farmerId: 'farmer-1',
+        farmer: { name: 'Jean', region: 'Huye' },
+      });
+
+      mockPrisma.mergeRelation.findMany
+        .mockResolvedValueOnce([
+          {
+            weightUsedKg: 50,
+            childBag: {
+              id: 'lot-1',
+              bagCode: 'LOT-1',
+              initialWeightKg: 100,
+              currentWeightKg: 100,
+              status: 'IN_STORAGE',
+              variety: 'ARABICA',
+              qualityScore: 91,
+              farmerId: null,
+              farmer: null,
+            },
+          },
+        ])
+        .mockResolvedValueOnce([]);
+
+      const result = await traceService.getForwardTrace('BAG-A');
+      expect(result.totalDescendantLots).toBe(1);
+      expect(result.descendantLots[0].bagCode).toBe('LOT-1');
+      expect(result.graphEdges).toHaveLength(1);
+    });
+  });
 });

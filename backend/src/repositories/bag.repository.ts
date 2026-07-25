@@ -103,7 +103,7 @@ export class BagRepository {
   }
 
   async createMerge(
-    sourceBagIds: string[],
+    contributions: { bagId: string; weightUsedKg: number }[],
     targetBagData: {
       bagCode: string;
       initialWeightKg: number;
@@ -113,7 +113,6 @@ export class BagRepository {
     }
   ): Promise<CoffeeBag> {
     return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      // 1. Create target merged bag
       const targetBag = await tx.coffeeBag.create({
         data: {
           bagCode: targetBagData.bagCode,
@@ -127,26 +126,34 @@ export class BagRepository {
         },
       });
 
-      // 2. Fetch source bags
+      const sourceIds = contributions.map((c) => c.bagId);
       const sourceBags = await tx.coffeeBag.findMany({
-        where: { id: { in: sourceBagIds } },
+        where: { id: { in: sourceIds } },
       });
+      const bagById = new Map(sourceBags.map((b) => [b.id, b]));
 
-      // 3. Create MergeRelations and update source bags status
-      for (const source of sourceBags) {
+      for (const contribution of contributions) {
+        const source = bagById.get(contribution.bagId);
+        if (!source) {
+          throw new Error(`Source bag ${contribution.bagId} missing during merge transaction`);
+        }
+
         await tx.mergeRelation.create({
           data: {
             parentBagId: source.id,
             childBagId: targetBag.id,
-            weightUsedKg: source.currentWeightKg,
+            weightUsedKg: contribution.weightUsedKg,
           },
         });
+
+        const remaining = Math.max(0, source.currentWeightKg - contribution.weightUsedKg);
+        const fullyConsumed = remaining <= 1e-9;
 
         await tx.coffeeBag.update({
           where: { id: source.id },
           data: {
-            currentWeightKg: 0.0,
-            status: BagStatus.MERGED,
+            currentWeightKg: fullyConsumed ? 0 : remaining,
+            status: fullyConsumed ? BagStatus.MERGED : BagStatus.IN_STORAGE,
           },
         });
       }

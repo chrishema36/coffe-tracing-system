@@ -1,4 +1,4 @@
-import { CreateFarmerSchema, CreateBagSchema, MergeBagsSchema } from '../../src/dtos';
+import { CreateFarmerSchema, CreateBagSchema, MergeBagsSchema, UpdateFarmerSchema } from '../../src/dtos';
 
 describe('Zod Validation DTO Schemas (Unit Tests)', () => {
   describe('CreateFarmerSchema', () => {
@@ -34,6 +34,18 @@ describe('Zod Validation DTO Schemas (Unit Tests)', () => {
         region: 'Region',
       };
       const result = CreateFarmerSchema.safeParse(input);
+      expect(result.success).toBe(false);
+    });
+  });
+
+  describe('UpdateFarmerSchema', () => {
+    it('should accept a partial update payload', () => {
+      const result = UpdateFarmerSchema.safeParse({ name: 'Updated Name', region: 'Rubavu' });
+      expect(result.success).toBe(true);
+    });
+
+    it('should reject an empty update payload', () => {
+      const result = UpdateFarmerSchema.safeParse({});
       expect(result.success).toBe(false);
     });
   });
@@ -75,6 +87,20 @@ describe('Zod Validation DTO Schemas (Unit Tests)', () => {
         variety: 'BOURBON',
       };
       const result = MergeBagsSchema.safeParse(input);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.sources).toHaveLength(2);
+      }
+    });
+
+    it('should validate partial-weight sources payload', () => {
+      const result = MergeBagsSchema.safeParse({
+        targetBagCode: 'EXPORT-LOT-02',
+        sources: [
+          { bagId: '550e8400-e29b-41d4-a716-446655440000', weightUsedKg: 20 },
+          { bagId: '550e8400-e29b-41d4-a716-446655440001', weightUsedKg: 15 },
+        ],
+      });
       expect(result.success).toBe(true);
     });
 

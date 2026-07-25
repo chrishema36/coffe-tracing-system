@@ -9,8 +9,9 @@ export const createBagRouter = (bagController: BagController): Router => {
   router.get('/', bagController.getBags);
   router.post('/', validateBody(CreateBagSchema), bagController.createBag);
   router.post('/merge', validateBody(MergeBagsSchema), bagController.mergeBags);
-  router.get('/:id', bagController.getBagById);
+  router.get('/:id/trace/forward', bagController.getBagForwardTrace);
   router.get('/:id/trace', bagController.getBagTrace);
+  router.get('/:id', bagController.getBagById);
 
   return router;
 };

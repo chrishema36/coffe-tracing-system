@@ -52,12 +52,7 @@ export default function DashboardPage() {
   });
 
   const summary = data?.data;
-  const recentFarmersList = farmersData?.data || [
-    { id: '1', name: 'Jean Bosco', code: 'FARM-001', region: 'Huye' },
-    { id: '2', name: 'Emmanuel Nshimiyimana', code: 'FARM-002', region: 'Nyamagabe' },
-    { id: '3', name: 'Marie Claire Uwase', code: 'FARM-003', region: 'Gakenke' },
-    { id: '4', name: 'Diane Mukamana', code: 'FARM-004', region: 'Rutsiro' },
-  ];
+  const recentFarmersList = farmersData?.data || [];
 
   const varietyColors: Record<string, string> = {
     ARABICA: 'from-amber-500 to-amber-600',
@@ -67,12 +62,25 @@ export default function DashboardPage() {
     GEISHA: 'from-purple-500 to-indigo-600',
   };
 
-  const activityTimeline = [
-    { time: '10:22 AM', title: 'Export Certificate Generated', subtitle: 'Lot EXPORT-SUPER-LOT-01 (250 kg)', icon: FileText, color: 'text-amberAccent bg-amberAccent/15 border-amberAccent/35' },
-    { time: '10:10 AM', title: 'Lineage Trace Requested', subtitle: 'Backward DAG walk for EXPORT-SUPER-LOT-01', icon: GitMerge, color: 'text-sky-400 bg-sky-500/15 border-sky-500/35' },
-    { time: '09:55 AM', title: 'Merged into EXPORT-01', subtitle: 'BAG-2026-M1 & BAG-2026-M2 combined', icon: GitMerge, color: 'text-amber-400 bg-amber-500/15 border-amber-500/35' },
-    { time: '09:20 AM', title: 'Bag RW-2026-01 Harvested', subtitle: 'Logged by Jean Bosco (50 kg Arabica)', icon: Coffee, color: 'text-emerald-400 bg-emerald-500/15 border-emerald-500/35' },
-  ];
+  const activityTimeline =
+    summary?.recentActivity?.length
+      ? summary.recentActivity.slice(0, 6).map((item) => {
+          const isMerge = item.type === 'BAG_MERGED';
+          const ts = new Date(item.timestamp);
+          const time = Number.isNaN(ts.getTime())
+            ? ''
+            : ts.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          return {
+            time,
+            title: isMerge ? 'Composite Lot Created' : 'Harvest Bag Logged',
+            subtitle: item.details,
+            icon: isMerge ? GitMerge : Coffee,
+            color: isMerge
+              ? 'text-amber-400 bg-amber-500/15 border-amber-500/35'
+              : 'text-emerald-400 bg-emerald-500/15 border-emerald-500/35',
+          };
+        })
+      : [];
 
   return (
     <div className="space-y-6 animate-fadeIn">
@@ -273,7 +281,10 @@ export default function DashboardPage() {
           </div>
 
           <div className="space-y-3.5">
-            {activityTimeline.map((item, idx) => {
+            {activityTimeline.length === 0 ? (
+              <p className="text-xs text-gray-500 py-6 text-center">No recent bag activity yet.</p>
+            ) : (
+              activityTimeline.map((item, idx) => {
               const Icon = item.icon;
               return (
                 <div key={idx} className="flex items-start space-x-3 text-xs group">
@@ -291,7 +302,8 @@ export default function DashboardPage() {
                   </div>
                 </div>
               );
-            })}
+            })
+            )}
           </div>
         </div>
 
@@ -308,7 +320,10 @@ export default function DashboardPage() {
           </div>
 
           <div className="space-y-2.5">
-            {recentFarmersList.map((farmer: any) => (
+            {recentFarmersList.length === 0 ? (
+              <p className="text-xs text-gray-500 py-6 text-center">No farmers registered yet.</p>
+            ) : (
+              recentFarmersList.map((farmer: any) => (
               <div
                 key={farmer.id || farmer.code}
                 className="flex items-center justify-between p-3 rounded-xl bg-background/60 border border-borderToken hover:border-amberAccent/40 transition-all text-xs"
@@ -330,7 +345,8 @@ export default function DashboardPage() {
                   View
                 </Link>
               </div>
-            ))}
+            ))
+            )}
           </div>
         </div>
 

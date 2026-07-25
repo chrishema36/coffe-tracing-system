@@ -1,5 +1,12 @@
 import axios from 'axios';
-import { ApiResponse, Farmer, CoffeeBag, TraceabilityResult, DashboardSummary } from '../types';
+import {
+  ApiResponse,
+  Farmer,
+  CoffeeBag,
+  TraceabilityResult,
+  ForwardTraceResult,
+  DashboardSummary,
+} from '../types';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || '/api/v1',
@@ -25,6 +32,19 @@ export const fetchFarmerById = async (idOrCode: string) => {
   return data;
 };
 
+export const updateFarmer = async (idOrCode: string, farmerData: Partial<Farmer>) => {
+  const { data } = await api.patch<ApiResponse<Farmer>>(
+    `/farmers/${encodeURIComponent(idOrCode)}`,
+    farmerData
+  );
+  return data;
+};
+
+export const deleteFarmer = async (idOrCode: string) => {
+  const { data } = await api.delete<ApiResponse<null>>(`/farmers/${encodeURIComponent(idOrCode)}`);
+  return data;
+};
+
 export const fetchBags = async (page = 1, limit = 5, status = '', search = '') => {
   const { data } = await api.get<ApiResponse<CoffeeBag[]>>('/bags', {
     params: { page, limit, status: status || undefined, search },
@@ -37,13 +57,28 @@ export const createBag = async (bagData: Partial<CoffeeBag>) => {
   return data;
 };
 
-export const mergeBags = async (payload: { sourceBagIds: string[]; targetBagCode: string }) => {
+export type MergePayload = {
+  targetBagCode: string;
+  sources: { bagId: string; weightUsedKg?: number }[];
+  variety?: string;
+};
+
+export const mergeBags = async (payload: MergePayload) => {
   const { data } = await api.post<ApiResponse<CoffeeBag>>('/bags/merge', payload);
   return data;
 };
 
 export const fetchBagTrace = async (bagIdOrCode: string) => {
-  const { data } = await api.get<ApiResponse<TraceabilityResult>>(`/bags/${bagIdOrCode}/trace`);
+  const { data } = await api.get<ApiResponse<TraceabilityResult>>(
+    `/bags/${encodeURIComponent(bagIdOrCode)}/trace`
+  );
+  return data;
+};
+
+export const fetchBagForwardTrace = async (bagIdOrCode: string) => {
+  const { data } = await api.get<ApiResponse<ForwardTraceResult>>(
+    `/bags/${encodeURIComponent(bagIdOrCode)}/trace/forward`
+  );
   return data;
 };
 
