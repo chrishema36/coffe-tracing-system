@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchBags } from '../lib/api';
 import Link from 'next/link';
@@ -22,6 +22,7 @@ import {
   User,
 } from 'lucide-react';
 import { LogBagModal } from './LogBagModal';
+import { loadWorkspaceSettings } from '../lib/workspaceSettings';
 
 export function BagsTable({ onOpenMergeModal }: { onOpenMergeModal?: () => void }) {
   const [page, setPage] = useState(1);
@@ -31,6 +32,12 @@ export function BagsTable({ onOpenMergeModal }: { onOpenMergeModal?: () => void 
   const [density, setDensity] = useState<'comfortable' | 'compact'>('comfortable');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [isLogBagOpen, setIsLogBagOpen] = useState(false);
+
+  useEffect(() => {
+    if (loadWorkspaceSettings().compactTables) {
+      setDensity('compact');
+    }
+  }, []);
 
   const limit = 5; // Strict limit!
 
@@ -192,7 +199,7 @@ export function BagsTable({ onOpenMergeModal }: { onOpenMergeModal?: () => void 
       {/* Table Container */}
       <div className="rounded-2xl border border-borderToken bg-surface/90 overflow-hidden shadow-2xl backdrop-blur-sm">
         <div className="overflow-x-auto no-scrollbar">
-          <table className="w-full text-left text-sm text-gray-300">
+          <table className="data-table w-full text-left text-sm text-gray-300">
             <thead className="bg-background/80 text-[11px] uppercase tracking-wider text-gray-400 border-b border-borderToken font-bold">
               <tr>
                 <th className="px-6 py-4">Bag Identification</th>

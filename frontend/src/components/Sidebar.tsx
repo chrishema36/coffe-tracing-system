@@ -10,7 +10,6 @@ import {
   Coffee,
   ChevronLeft,
   ChevronRight,
-  ShieldCheck,
   X,
   Settings,
 } from 'lucide-react';
@@ -131,28 +130,7 @@ export function Sidebar() {
         </div>
 
         {/* Footer & Collapse Toggle */}
-        <div className="p-3 border-t border-borderToken bg-background/40 space-y-3">
-          {/* Strict Pagination Indicator */}
-          {!isCollapsed ? (
-            <div className="p-3 rounded-xl bg-surfaceHover/80 border border-borderToken text-xs space-y-1 shadow-inner">
-              <div className="flex items-center space-x-1.5 font-bold text-emerald-400 text-[11px]">
-                <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                <span>Strict Pagination Guard</span>
-              </div>
-              <p className="text-gray-400 text-[10px] leading-relaxed">
-                Max 5 records per page strictly enforced across all REST API endpoints.
-              </p>
-            </div>
-          ) : (
-            <div
-              title="Strict 5 records per page limit active"
-              className="flex justify-center p-2 rounded-xl bg-surfaceHover border border-borderToken text-emerald-400"
-            >
-              <ShieldCheck className="w-4 h-4" />
-            </div>
-          )}
-
-          {/* Desktop Toggle Button */}
+        <div className="p-3 border-t border-borderToken bg-background/40">
           <button
             onClick={toggleSidebar}
             className="hidden lg:flex items-center justify-center w-full py-2.5 rounded-xl border border-borderToken bg-surface hover:bg-surfaceHover text-gray-400 hover:text-gray-100 text-xs font-bold transition-all group"

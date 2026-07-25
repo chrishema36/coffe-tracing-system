@@ -25,6 +25,7 @@ import { FarmerProfileDrawer } from './FarmerProfileDrawer';
 import { EditFarmerModal } from './EditFarmerModal';
 import { Farmer } from '../types';
 import { useToast } from '../context/ToastContext';
+import { loadWorkspaceSettings } from '../lib/workspaceSettings';
 
 export function FarmersTable() {
   const toast = useToast();
@@ -121,9 +122,14 @@ export function FarmersTable() {
       );
       return;
     }
-    if (window.confirm(`Delete farmer ${farmer.name} (${farmer.code})? This cannot be undone.`)) {
-      deleteMutation.mutate(farmer.id);
+    const prefs = loadWorkspaceSettings();
+    if (
+      prefs.confirmDestructive &&
+      !window.confirm(`Delete farmer ${farmer.name} (${farmer.code})? This cannot be undone.`)
+    ) {
+      return;
     }
+    deleteMutation.mutate(farmer.id);
   };
 
   return (
@@ -204,7 +210,7 @@ export function FarmersTable() {
       {/* Farmers Table */}
       <div className="rounded-2xl border border-borderToken bg-surface/90 overflow-hidden shadow-2xl backdrop-blur-sm">
         <div className="overflow-x-auto no-scrollbar">
-          <table className="w-full text-left text-sm text-gray-300">
+          <table className="data-table w-full text-left text-sm text-gray-300">
             <thead className="bg-background/80 text-[11px] uppercase tracking-wider text-gray-400 border-b border-borderToken font-bold">
               <tr>
                 <th className="px-6 py-4">Farmer Profile</th>

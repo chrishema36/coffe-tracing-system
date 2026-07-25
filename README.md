@@ -35,7 +35,7 @@
 - ⚡ **Command Palette (`Ctrl + K` / `Cmd + K`):** Global quick-search and action overlay for farmers, bags, merges, and settings.
 - 👤 **Farmer Profile Side Drawer:** Slide-over panel with contact info, bag counts, yield stats, and harvest history.
 - 📊 **Executive Dashboard:** Activity timeline, variety breakdown, and operational quick actions.
-- 🛡️ **Strict Pagination Guard:** Max 5 records per page enforced on list endpoints (`/farmers`, `/bags`) via Zod DTOs and service limits.
+- 📄 **Paginated listings:** Farmer and bag lists default to 5 records per page (API-enforced).
 
 ---
 
@@ -167,7 +167,7 @@ sequenceDiagram
 │   │   │   ├── MergeModal.tsx    # Multi-bag merge execution modal
 │   │   │   ├── Navbar.tsx        # Top header & quick search bar
 │   │   │   ├── RegisterFarmerModal.tsx # Farmer onboarding modal
-│   │   │   ├── Sidebar.tsx       # Enterprise navigation & pagination guard indicator
+│   │   │   ├── Sidebar.tsx       # Enterprise navigation
 │   │   │   └── TraceabilityGraph.tsx # React Flow DAG & Lineage Replay Engine
 │   │   ├── context/              # Toast & Sidebar state context
 │   │   ├── lib/                  # Axios API client

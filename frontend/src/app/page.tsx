@@ -12,7 +12,6 @@ import {
   Coffee,
   ArrowRight,
   Sparkles,
-  CheckCircle2,
   PlusCircle,
   FileText,
   Clock,
@@ -460,7 +459,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Right Side: Quick Trace Lots & Assessment Compliance Card */}
+        {/* Right Side: Quick Trace Lots */}
         <div className="space-y-5">
           {/* Quick Lineage Inspection Card */}
           <div className="p-6 rounded-2xl border border-borderToken bg-surface/80 space-y-4 shadow-xl">
@@ -501,17 +500,6 @@ export default function DashboardPage() {
                 </Link>
               ))}
             </div>
-          </div>
-
-          {/* Assessment Constraint Verification Card */}
-          <div className="p-4.5 rounded-2xl border border-emerald-500/35 bg-emerald-950/20 space-y-2 shadow-lg">
-            <div className="flex items-center space-x-2 text-emerald-400 font-extrabold text-xs">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              <span>SLR Assessment Compliance</span>
-            </div>
-            <p className="text-[11px] text-gray-300 leading-relaxed">
-              Strict <strong>5 records per page</strong> limit is enforced on all list endpoints (`/farmers`, `/bags`) via Zod input DTOs and SQL limit parameters.
-            </p>
           </div>
         </div>
       </div>

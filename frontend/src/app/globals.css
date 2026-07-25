@@ -112,3 +112,10 @@ code, kbd, samp, pre {
 .react-flow__controls button:hover {
   background: #221D17 !important;
 }
+
+/* Compact table density (Settings → Preferences) */
+html[data-compact='true'] .data-table th,
+html[data-compact='true'] .data-table td {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
