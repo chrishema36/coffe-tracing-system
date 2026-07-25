@@ -12,9 +12,10 @@ interface ModalShellProps {
 }
 
 /**
- * Modal anchored near the top of the viewport (not dead-center),
- * so content stays visible. Tall content scrolls inside the panel body;
- * the overlay can also scroll as a fallback on small screens.
+ * Scrollable overlay modal.
+ * - Anchored near the top of the screen (not vertically centered)
+ * - Panel grows with content (footer is never clipped)
+ * - Wheel / trackpad scroll works on the dimmed area AND inside the modal
  */
 export function ModalShell({
   isOpen,
@@ -41,19 +42,21 @@ export function ModalShell({
   if (!isOpen) return null;
 
   return (
-    <div className={`fixed inset-0 ${zClass} overflow-y-auto overscroll-contain`} role="dialog" aria-modal="true">
-      {/* Backdrop — fixed so it covers the viewport while the overlay scrolls */}
-      <button
-        type="button"
-        aria-label="Close dialog backdrop"
-        className="fixed inset-0 z-0 border-0 bg-black/70 backdrop-blur-sm cursor-default"
+    <div
+      className={`fixed inset-0 ${zClass} overflow-y-auto overscroll-contain`}
+      role="dialog"
+      aria-modal="true"
+    >
+      {/*
+        One scrollable column: dimmed background + modal.
+        Clicking the padding/backdrop closes; scrolling works anywhere in this column.
+      */}
+      <div
+        className="relative flex min-h-full justify-center bg-black/70 backdrop-blur-sm px-3 pt-6 sm:pt-10 pb-12"
         onClick={onClose}
-      />
-
-      {/* Top-biased placement; padding keeps the modal in the upper half */}
-      <div className="relative z-10 flex min-h-full items-start justify-center px-3 pt-[5vh] sm:pt-[6vh] pb-10">
+      >
         <div
-          className={`relative flex w-full ${maxWidthClass} max-h-[min(88vh,880px)] flex-col overflow-hidden rounded-2xl border border-borderToken bg-surface shadow-2xl animate-fadeIn`}
+          className={`relative my-0 w-full ${maxWidthClass} h-fit max-h-none rounded-2xl border border-borderToken bg-surface shadow-2xl animate-fadeIn`}
           onClick={(e) => e.stopPropagation()}
         >
           {children}
@@ -71,7 +74,7 @@ export function ModalHeader({
   className?: string;
 }) {
   return (
-    <div className={`shrink-0 border-b border-borderToken/70 px-4 sm:px-6 py-3.5 sm:py-4 ${className}`}>
+    <div className={`border-b border-borderToken/70 px-4 sm:px-6 py-3.5 sm:py-4 ${className}`}>
       {children}
     </div>
   );
@@ -84,13 +87,7 @@ export function ModalBody({
   children: React.ReactNode;
   className?: string;
 }) {
-  return (
-    <div
-      className={`min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 sm:px-6 py-4 [-webkit-overflow-scrolling:touch] ${className}`}
-    >
-      {children}
-    </div>
-  );
+  return <div className={`px-4 sm:px-6 py-4 ${className}`}>{children}</div>;
 }
 
 export function ModalFooter({
@@ -102,7 +99,7 @@ export function ModalFooter({
 }) {
   return (
     <div
-      className={`shrink-0 border-t border-borderToken/70 px-4 sm:px-6 py-3 sm:py-4 bg-surfaceHover/40 ${className}`}
+      className={`border-t border-borderToken/70 px-4 sm:px-6 py-3 sm:py-4 bg-surfaceHover/40 ${className}`}
     >
       {children}
     </div>
@@ -116,7 +113,7 @@ export function ModalForm({
   ...props
 }: React.FormHTMLAttributes<HTMLFormElement>) {
   return (
-    <form {...props} className={`flex min-h-0 flex-1 flex-col overflow-hidden ${className}`}>
+    <form {...props} className={className}>
       {children}
     </form>
   );
