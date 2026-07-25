@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { X, Activity, Filter, Clock, User, Coffee, GitMerge, FileText } from 'lucide-react';
+import { ModalBody, ModalFooter, ModalHeader, ModalShell } from './ModalShell';
 
 interface AuditLogModalProps {
   isOpen: boolean;
@@ -60,103 +61,103 @@ const sampleLogs = [
 export function AuditLogModal({ isOpen, onClose }: AuditLogModalProps) {
   const [filterType, setFilterType] = useState<string>('ALL');
 
-  if (!isOpen) return null;
-
   const filteredLogs = sampleLogs.filter((log) => {
     if (filterType === 'ALL') return true;
     return log.action.includes(filterType);
   });
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-background/80 backdrop-blur-md animate-fadeIn">
-      <div className="fixed inset-0" onClick={onClose} />
-
-      <div className="relative w-full max-w-3xl rounded-3xl border border-borderToken bg-surface shadow-2xl overflow-hidden z-10 my-8">
-        <div className="p-6 border-b border-borderToken flex items-center justify-between bg-surfaceHover/30">
-          <div className="flex items-center space-x-3">
-            <div className="p-3 rounded-2xl bg-emerald-500/15 border border-emerald-500/35 text-emerald-400 shadow-md">
-              <Activity className="w-6 h-6" />
+    <ModalShell isOpen={isOpen} onClose={onClose} maxWidthClass="max-w-3xl" zClass="z-[120]">
+      <ModalHeader className="bg-surfaceHover/30">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center space-x-3 min-w-0">
+            <div className="p-2.5 sm:p-3 rounded-2xl bg-emerald-500/15 border border-emerald-500/35 text-emerald-400 shrink-0">
+              <Activity className="w-5 sm:w-6 h-5 sm:h-6" />
             </div>
-            <div>
-              <h2 className="text-lg font-black text-gray-100 tracking-tight">Recent Activity</h2>
-              <p className="text-xs text-gray-400">
-                Sample operational timeline for demo review (harvests, merges, traces, certificates)
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-black text-gray-100 tracking-tight">
+                Recent Activity
+              </h2>
+              <p className="text-xs text-gray-400 truncate">
+                Sample timeline for demo review
               </p>
             </div>
           </div>
-
           <button
+            type="button"
             onClick={onClose}
-            className="p-2 rounded-xl border border-borderToken text-gray-400 hover:text-gray-100 hover:bg-surface transition-all"
+            className="p-2 rounded-xl border border-borderToken text-gray-400 hover:text-gray-100 shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
+      </ModalHeader>
 
-        <div className="px-6 py-3 border-b border-borderToken bg-background/60 flex items-center justify-between gap-4 text-xs">
-          <div className="flex items-center space-x-2">
-            <Filter className="w-3.5 h-3.5 text-amberAccent" />
-            <span className="font-bold text-gray-300">Filter Event:</span>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            {['ALL', 'BAG', 'MERGE', 'TRACE', 'CERTIFICATE'].map((type) => (
-              <button
-                key={type}
-                onClick={() => setFilterType(type)}
-                className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all ${
-                  filterType === type
-                    ? 'bg-amberAccent text-gray-950 shadow-sm'
-                    : 'bg-surface hover:bg-surfaceHover text-gray-400 hover:text-gray-200 border border-borderToken'
-                }`}
-              >
-                {type}
-              </button>
-            ))}
-          </div>
+      <div className="shrink-0 px-4 sm:px-6 py-3 border-b border-borderToken bg-background/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        <div className="flex items-center space-x-2">
+          <Filter className="w-3.5 h-3.5 text-amberAccent" />
+          <span className="font-bold text-gray-300">Filter</span>
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {['ALL', 'BAG', 'MERGE', 'TRACE', 'CERTIFICATE'].map((type) => (
+            <button
+              key={type}
+              type="button"
+              onClick={() => setFilterType(type)}
+              className={`px-3 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                filterType === type
+                  ? 'bg-amberAccent text-gray-950 shadow-sm'
+                  : 'bg-surface hover:bg-surfaceHover text-gray-400 hover:text-gray-200 border border-borderToken'
+              }`}
+            >
+              {type}
+            </button>
+          ))}
+        </div>
+      </div>
 
-        <div className="p-6 max-h-[60vh] overflow-y-auto space-y-3">
-          {filteredLogs.map((log) => {
-            const Icon = log.icon;
-            return (
-              <div
-                key={log.id}
-                className="p-4 rounded-xl border border-borderToken bg-background/50 hover:border-amberAccent/40 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
-              >
-                <div className="flex items-start space-x-3">
-                  <div className={`p-2.5 rounded-xl border ${log.badgeColor} shrink-0 mt-0.5`}>
-                    <Icon className="w-4 h-4" />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-mono font-bold text-gray-200">{log.action}</span>
-                      <span className="text-[10px] text-gray-500 font-mono">({log.id})</span>
-                    </div>
-                    <p className="text-gray-300 leading-snug">{log.details}</p>
-                  </div>
+      <ModalBody className="space-y-3">
+        {filteredLogs.map((log) => {
+          const Icon = log.icon;
+          return (
+            <div
+              key={log.id}
+              className="p-4 rounded-xl border border-borderToken bg-background/50 hover:border-amberAccent/40 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+            >
+              <div className="flex items-start space-x-3 min-w-0">
+                <div className={`p-2.5 rounded-xl border ${log.badgeColor} shrink-0 mt-0.5`}>
+                  <Icon className="w-4 h-4" />
                 </div>
-
-                <div className="flex sm:flex-col items-center sm:items-end justify-between text-[11px] text-gray-400 shrink-0 space-y-0.5">
-                  <div className="flex items-center space-x-1 font-mono">
-                    <Clock className="w-3 h-3 text-amberAccent" />
-                    <span>{log.timestamp}</span>
+                <div className="space-y-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-mono font-bold text-gray-200 break-all">{log.action}</span>
+                    <span className="text-[10px] text-gray-500 font-mono">({log.id})</span>
                   </div>
-                  <div className="flex items-center space-x-1">
-                    <User className="w-3 h-3 text-gray-500" />
-                    <span>{log.actor}</span>
-                  </div>
+                  <p className="text-gray-300 leading-snug">{log.details}</p>
                 </div>
               </div>
-            );
-          })}
-        </div>
 
-        <div className="p-4 border-t border-borderToken bg-surfaceHover/30 flex justify-between items-center text-xs text-gray-400">
+              <div className="flex sm:flex-col items-center sm:items-end justify-between text-[11px] text-gray-400 shrink-0 gap-1">
+                <div className="flex items-center space-x-1 font-mono">
+                  <Clock className="w-3 h-3 text-amberAccent" />
+                  <span>{log.timestamp}</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <User className="w-3 h-3 text-gray-500" />
+                  <span>{log.actor}</span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </ModalBody>
+
+      <ModalFooter>
+        <div className="flex justify-between items-center text-xs text-gray-400">
           <span>Showing {filteredLogs.length} sample events</span>
           <span className="font-mono text-amberAccent text-[11px]">Demo timeline</span>
         </div>
-      </div>
-    </div>
+      </ModalFooter>
+    </ModalShell>
   );
 }

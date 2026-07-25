@@ -1,23 +1,10 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import {
-  X,
-  Award,
-  ShieldCheck,
-  Download,
-  Printer,
-  Coffee,
-  MapPin,
-  Hash,
-  Sparkles,
-  Scale,
-  FileCheck,
-  Building2,
-  CheckCircle2,
-} from 'lucide-react';
+import { X, Download, Printer, FileCheck } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { downloadCertificatePDF } from '../lib/pdfGenerator';
+import { ModalBody, ModalFooter, ModalHeader, ModalShell } from './ModalShell';
 
 export interface FarmerAttributionItem {
   farmerCode: string;
@@ -61,24 +48,24 @@ export function CertificateModal({
   onClose,
   lotId = 'EXPORT-SUPER-LOT-01',
   weightKg = 250,
-  farmers = ['Jean-Luc Habimana', 'Marie-Claire Mukamana', 'Emmanuel Nshimiyimana', 'Bosco Mugisha'],
+  farmers = [],
   region = 'Southern & Northern Provinces, Rwanda',
   attributions,
-  variety = 'Bourbon / Specialty Arabica',
+  variety = 'Bourbon',
   qualityScore = 95,
   moisturePercent = 10.9,
 }: CertificateModalProps) {
   const toast = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
-  const [exportTheme, setExportTheme] = useState<'dark' | 'light'>('dark');
-  const [lineageHash, setLineageHash] = useState<string>('computing…');
+  const [lineageHash, setLineageHash] = useState<string>('…');
 
-  const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
-  const certificateRefNo = `CT-CERT-2026-${lotId.replace(/[^A-Z0-9]/gi, '')}`;
+  const issuedAt = new Date();
+  const timestamp =
+    issuedAt.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+  const certificateRefNo = `CT-${issuedAt.getFullYear()}-${lotId.replace(/[^A-Z0-9]/gi, '').slice(0, 18)}`;
   const traceUrl = buildTraceUrl(lotId);
-  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&margin=8&data=${encodeURIComponent(traceUrl)}`;
+  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&margin=6&data=${encodeURIComponent(traceUrl)}`;
 
-  // Build fallback attributions if none provided
   const displayAttributions: FarmerAttributionItem[] =
     attributions && attributions.length > 0
       ? attributions
@@ -89,7 +76,7 @@ export function CertificateModal({
             region: 'Huye District',
             country: 'Rwanda',
             contributedWeightKg: 100,
-            contributionPercentage: 40.0,
+            contributionPercentage: 40,
           },
           {
             farmerCode: 'FRM-RWA-002',
@@ -97,7 +84,7 @@ export function CertificateModal({
             region: 'Nyamagabe',
             country: 'Rwanda',
             contributedWeightKg: 65,
-            contributionPercentage: 26.0,
+            contributionPercentage: 26,
           },
           {
             farmerCode: 'FRM-RWA-003',
@@ -105,7 +92,7 @@ export function CertificateModal({
             region: 'Gakenke',
             country: 'Rwanda',
             contributedWeightKg: 50,
-            contributionPercentage: 20.0,
+            contributionPercentage: 20,
           },
           {
             farmerCode: 'FRM-RWA-004',
@@ -113,7 +100,7 @@ export function CertificateModal({
             region: 'Rutsiro',
             country: 'Rwanda',
             contributedWeightKg: 35,
-            contributionPercentage: 14.0,
+            contributionPercentage: 14,
           },
         ];
 
@@ -142,265 +129,144 @@ export function CertificateModal({
     };
   }, [isOpen, lotId, weightKg, variety, qualityScore, moisturePercent, region, farmers, attributions]);
 
-  if (!isOpen) return null;
-
   const handlePrint = () => {
     window.print();
-    toast.success('Certificate Printing Triggered', `Export Certificate for ${lotId} sent to printer.`);
+    toast.success('Print started', `Certificate for ${lotId}`);
   };
 
   const handleDownloadPDF = async () => {
     setIsGenerating(true);
     try {
       await downloadCertificatePDF('certificate-pdf-canvas', `CoffeeTrace_Certificate_${lotId}.pdf`);
-      toast.success(
-        'PDF Certificate Generated',
-        `High-resolution export certificate saved as CoffeeTrace_Certificate_${lotId}.pdf`
-      );
+      toast.success('PDF saved', `CoffeeTrace_Certificate_${lotId}.pdf`);
     } catch (err) {
-      console.error('PDF Generation Error:', err);
-      toast.error('PDF Generation Failed', 'An error occurred while building the PDF certificate.');
+      console.error(err);
+      toast.error('PDF failed', 'Could not generate the certificate PDF.');
     } finally {
       setIsGenerating(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center p-2 sm:p-4 bg-background/85 backdrop-blur-md animate-fadeIn overflow-y-auto">
-      <div className="fixed inset-0" onClick={onClose} />
-
-      <div className="relative w-full max-w-4xl rounded-3xl border border-amber-500/40 bg-surface shadow-2xl overflow-hidden z-10 my-4 sm:my-8 flex flex-col max-h-[92vh]">
-        <div className="h-2.5 bg-gradient-to-r from-amber-600 via-amber-400 via-emerald-400 to-amber-600 shrink-0" />
-
-        <div className="p-4 sm:p-6 border-b border-borderToken flex items-center justify-between bg-surfaceHover/40 shrink-0">
-          <div className="flex items-center space-x-3">
-            <div className="p-2.5 sm:p-3 rounded-2xl bg-amber-500/15 border border-amber-500/35 text-amberAccent shadow-md">
-              <Award className="w-5 sm:w-6 h-5 sm:h-6" />
-            </div>
-            <div>
-              <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amberAccent text-[10px] font-extrabold border border-amber-500/25">
-                <Sparkles className="w-3 h-3" />
-                <span>CoffeeTrace Origin Certificate</span>
-              </div>
-              <h2 className="text-base sm:text-lg font-black text-gray-100 tracking-tight mt-0.5">
-                Coffee Origin Export Certificate
-              </h2>
-            </div>
+    <ModalShell isOpen={isOpen} onClose={onClose} maxWidthClass="max-w-3xl" zClass="z-[120]">
+      <ModalHeader>
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="text-base sm:text-lg font-bold text-gray-100">Origin Certificate</h2>
+            <p className="text-xs text-gray-400 truncate">Preview · print or download as PDF</p>
           </div>
-
-          <div className="flex items-center space-x-2">
-            <div className="hidden sm:flex items-center bg-background/80 rounded-xl p-1 border border-borderToken text-xs font-bold">
-              <button
-                onClick={() => setExportTheme('dark')}
-                className={`px-2.5 py-1 rounded-lg transition-all ${
-                  exportTheme === 'dark'
-                    ? 'bg-amber-500/20 text-amberAccent border border-amber-500/40'
-                    : 'text-gray-400 hover:text-gray-200'
-                }`}
-              >
-                Dark Gold
-              </button>
-              <button
-                onClick={() => setExportTheme('light')}
-                className={`px-2.5 py-1 rounded-lg transition-all ${
-                  exportTheme === 'light'
-                    ? 'bg-amber-500/20 text-amberAccent border border-amber-500/40'
-                    : 'text-gray-400 hover:text-gray-200'
-                }`}
-              >
-                Light Ivory
-              </button>
-            </div>
-
-            <button
-              onClick={onClose}
-              className="p-2 rounded-xl border border-borderToken text-gray-400 hover:text-gray-100 hover:bg-surface transition-all"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-
-        <div className="p-4 sm:p-6 overflow-y-auto space-y-6 flex-1 bg-background/50">
-          <div
-            id="certificate-pdf-canvas"
-            className={`relative p-6 sm:p-10 rounded-2xl border-2 shadow-2xl transition-all duration-300 ${
-              exportTheme === 'dark'
-                ? 'bg-gradient-to-br from-slate-950 via-slate-900 to-amber-950/40 border-amber-500/50 text-gray-100'
-                : 'bg-gradient-to-br from-amber-50/95 via-white to-amber-100/90 border-amber-700/60 text-slate-900'
-            }`}
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-2 rounded-xl border border-borderToken text-gray-400 hover:text-gray-100 shrink-0"
           >
-            <div className="absolute top-3 left-3 w-6 h-6 border-t-2 border-l-2 border-amber-500/70" />
-            <div className="absolute top-3 right-3 w-6 h-6 border-t-2 border-r-2 border-amber-500/70" />
-            <div className="absolute bottom-3 left-3 w-6 h-6 border-b-2 border-l-2 border-amber-500/70" />
-            <div className="absolute bottom-3 right-3 w-6 h-6 border-b-2 border-r-2 border-amber-500/70" />
-            <div className="absolute inset-2 border border-dashed border-amber-500/30 rounded-xl pointer-events-none" />
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      </ModalHeader>
 
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-6 border-b pb-6 border-amber-500/30">
-              <div className="flex items-center space-x-4 text-center sm:text-left">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-600 via-amber-400 to-amber-200 p-0.5 shadow-xl shrink-0">
-                  <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center text-amber-400">
-                    <Coffee className="w-8 h-8" />
-                  </div>
-                </div>
+      <ModalBody className="bg-[#1a1814]/40">
+        {/* Printable paper certificate — light document style for PDF */}
+        <div
+          id="certificate-pdf-canvas"
+          className="mx-auto w-full max-w-[720px] bg-white text-[#1c2430] shadow-xl"
+          style={{ fontFamily: 'Georgia, "Times New Roman", Times, serif' }}
+        >
+          <div className="border-[3px] border-[#1c2430] m-3 sm:m-4">
+            <div className="border border-[#1c2430]/35 m-1.5 p-5 sm:p-8">
+              {/* Letterhead */}
+              <div className="text-center border-b border-[#1c2430]/25 pb-4 mb-5">
+                <p
+                  className="text-[10px] sm:text-[11px] tracking-[0.28em] uppercase text-[#4a5568]"
+                  style={{ fontFamily: 'system-ui, sans-serif' }}
+                >
+                  CoffeeTrace Export Documentation
+                </p>
+                <h1 className="mt-2 text-xl sm:text-2xl font-bold tracking-tight text-[#1c2430]">
+                  Certificate of Origin
+                </h1>
+                <p
+                  className="mt-1 text-[11px] sm:text-xs text-[#4a5568]"
+                  style={{ fontFamily: 'system-ui, sans-serif' }}
+                >
+                  Farmer weight attribution for multi-tier bag lineage
+                </p>
+              </div>
 
-                <div>
-                  <div className="flex items-center justify-center sm:justify-start space-x-2">
-                    <span className="text-[11px] font-black uppercase tracking-widest text-amber-500">
-                      COFFEETRACE • ORIGIN AUTHORITY
+              {/* Meta row */}
+              <div
+                className="flex flex-col sm:flex-row gap-5 sm:gap-6 items-start justify-between mb-6"
+                style={{ fontFamily: 'system-ui, sans-serif' }}
+              >
+                <div className="space-y-2 text-[11px] sm:text-xs leading-relaxed flex-1">
+                  <div className="grid grid-cols-[7.5rem_1fr] gap-x-2 gap-y-1.5">
+                    <span className="text-[#64748b]">Certificate No.</span>
+                    <span className="font-semibold tracking-wide">{certificateRefNo}</span>
+                    <span className="text-[#64748b]">Issued</span>
+                    <span>{timestamp}</span>
+                    <span className="text-[#64748b]">Export lot</span>
+                    <span className="font-mono font-semibold">{lotId}</span>
+                    <span className="text-[#64748b]">Net weight</span>
+                    <span className="font-semibold">{weightKg} kg</span>
+                    <span className="text-[#64748b]">Variety</span>
+                    <span>{variety}</span>
+                    <span className="text-[#64748b]">Quality / moisture</span>
+                    <span>
+                      {qualityScore}/100 · {moisturePercent}% H₂O
                     </span>
-                  </div>
-                  <h1 className="text-xl sm:text-2xl font-black font-serif tracking-tight mt-0.5">
-                    Official Certificate of Origin & Lineage
-                  </h1>
-                  <p className={`text-xs mt-1 ${exportTheme === 'dark' ? 'text-gray-400' : 'text-slate-600'}`}>
-                    Multi-tier harvest aggregation with farmer weight attribution
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-4 bg-amber-500/10 p-3 rounded-2xl border border-amber-500/30">
-                <div className="w-14 h-14 bg-white border border-amber-500/40 rounded-xl flex items-center justify-center overflow-hidden p-1 shrink-0">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={qrImageUrl} alt={`QR code linking to ${traceUrl}`} className="w-full h-full object-contain" />
-                </div>
-                <div className="text-left space-y-1">
-                  <div className="text-[10px] font-extrabold uppercase tracking-wider text-amber-500">
-                    Certificate Reference
-                  </div>
-                  <div className="text-xs font-mono font-black tracking-wider text-amber-400">
-                    {certificateRefNo}
-                  </div>
-                  <div className="text-[9px] font-mono text-gray-400">{timestamp}</div>
-                  <div className="text-[8px] font-mono text-gray-500 max-w-[140px] truncate" title={traceUrl}>
-                    Scan → live trace
+                    <span className="text-[#64748b]">Origin</span>
+                    <span>{region}</span>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="my-6 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-              <div
-                className={`p-3.5 rounded-xl border ${
-                  exportTheme === 'dark'
-                    ? 'bg-slate-900/80 border-slate-800'
-                    : 'bg-white/90 border-amber-200 shadow-sm'
-                }`}
-              >
-                <div className="text-[9px] font-extrabold uppercase text-amber-500 flex items-center space-x-1">
-                  <Hash className="w-3 h-3" />
-                  <span>Export Lot Code</span>
-                </div>
-                <div className="font-mono font-black text-sm mt-1 text-amber-400">{lotId}</div>
-              </div>
-
-              <div
-                className={`p-3.5 rounded-xl border ${
-                  exportTheme === 'dark'
-                    ? 'bg-slate-900/80 border-slate-800'
-                    : 'bg-white/90 border-amber-200 shadow-sm'
-                }`}
-              >
-                <div className="text-[9px] font-extrabold uppercase text-amber-500 flex items-center space-x-1">
-                  <Scale className="w-3 h-3" />
-                  <span>Certified Net Weight</span>
-                </div>
-                <div className="font-mono font-black text-sm mt-1 text-emerald-400">{weightKg} kg</div>
-              </div>
-
-              <div
-                className={`p-3.5 rounded-xl border ${
-                  exportTheme === 'dark'
-                    ? 'bg-slate-900/80 border-slate-800'
-                    : 'bg-white/90 border-amber-200 shadow-sm'
-                }`}
-              >
-                <div className="text-[9px] font-extrabold uppercase text-amber-500 flex items-center space-x-1">
-                  <Coffee className="w-3 h-3" />
-                  <span>Coffee Cultivar</span>
-                </div>
-                <div className="font-bold text-xs mt-1 truncate">{variety}</div>
-              </div>
-
-              <div
-                className={`p-3.5 rounded-xl border ${
-                  exportTheme === 'dark'
-                    ? 'bg-slate-900/80 border-slate-800'
-                    : 'bg-white/90 border-amber-200 shadow-sm'
-                }`}
-              >
-                <div className="text-[9px] font-extrabold uppercase text-amber-500 flex items-center space-x-1">
-                  <Sparkles className="w-3 h-3" />
-                  <span>Cup Score & Moisture</span>
-                </div>
-                <div className="font-bold text-xs mt-1 text-amber-400">
-                  {qualityScore}/100 Score • {moisturePercent}% H₂O
+                <div className="flex flex-col items-center gap-1.5 shrink-0 self-center sm:self-start">
+                  <div className="w-[88px] h-[88px] border border-[#cbd5e1] bg-white p-1">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={qrImageUrl}
+                      alt="QR code to live lot trace"
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <span className="text-[9px] text-[#64748b] text-center max-w-[100px] leading-tight">
+                    Scan to open live lot trace
+                  </span>
                 </div>
               </div>
-            </div>
 
-            <div
-              className={`p-3.5 rounded-xl border mb-6 flex items-center justify-between text-xs ${
-                exportTheme === 'dark'
-                  ? 'bg-slate-900/90 border-slate-800 text-gray-200'
-                  : 'bg-amber-100/60 border-amber-300 text-slate-800'
-              }`}
-            >
-              <div className="flex items-center space-x-2">
-                <MapPin className="w-4 h-4 text-amber-500 shrink-0" />
-                <span className="font-extrabold uppercase text-[10px] text-amber-500">Origin Territory:</span>
-                <span className="font-bold">{region}</span>
-              </div>
-              <span className="hidden sm:inline-flex text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-500 border border-amber-500/30">
-                1,750m - 2,050m MASL
-              </span>
-            </div>
-
-            <div className="space-y-2 mb-6">
-              <div className="flex items-center justify-between">
-                <div className="text-[10px] font-black uppercase tracking-wider text-amber-500 flex items-center space-x-1.5">
-                  <Building2 className="w-3.5 h-3.5" />
-                  <span>Smallholder Farmer Origin Attribution Breakdown</span>
+              {/* Attribution table */}
+              <div className="mb-6" style={{ fontFamily: 'system-ui, sans-serif' }}>
+                <div className="flex items-end justify-between mb-2">
+                  <h2 className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#1c2430]">
+                    Farmer attribution
+                  </h2>
+                  <span className="text-[10px] text-[#64748b]">
+                    {displayAttributions.length} producer
+                    {displayAttributions.length === 1 ? '' : 's'}
+                  </span>
                 </div>
-                <span className="text-[10px] font-bold text-emerald-400">
-                  {displayAttributions.length} Participating Farmers
-                </span>
-              </div>
-
-              <div
-                className={`rounded-xl border overflow-hidden ${
-                  exportTheme === 'dark' ? 'border-slate-800 bg-slate-950/70' : 'border-amber-200 bg-white'
-                }`}
-              >
-                <table className="w-full text-left text-xs">
-                  <thead
-                    className={`text-[9px] font-extrabold uppercase tracking-wider border-b ${
-                      exportTheme === 'dark'
-                        ? 'bg-slate-900 text-gray-400 border-slate-800'
-                        : 'bg-amber-50 text-slate-600 border-amber-200'
-                    }`}
-                  >
-                    <tr>
-                      <th className="px-4 py-2.5">Farmer Code</th>
-                      <th className="px-4 py-2.5">Farmer Name</th>
-                      <th className="px-4 py-2.5">Region / District</th>
-                      <th className="px-4 py-2.5">Contributed Mass</th>
-                      <th className="px-4 py-2.5">Attribution %</th>
+                <table className="w-full text-left text-[10px] sm:text-[11px] border-collapse">
+                  <thead>
+                    <tr className="border-y border-[#1c2430]">
+                      <th className="py-2 pr-2 font-semibold">Code</th>
+                      <th className="py-2 pr-2 font-semibold">Producer</th>
+                      <th className="py-2 pr-2 font-semibold hidden sm:table-cell">Region</th>
+                      <th className="py-2 pr-2 font-semibold text-right">Mass</th>
+                      <th className="py-2 font-semibold text-right">Share</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-amber-500/10">
-                    {displayAttributions.map((attr, idx) => (
-                      <tr
-                        key={idx}
-                        className={exportTheme === 'dark' ? 'hover:bg-slate-900/50' : 'hover:bg-amber-50/50'}
-                      >
-                        <td className="px-4 py-2 font-mono font-bold text-amber-500">{attr.farmerCode}</td>
-                        <td className="px-4 py-2 font-semibold">{attr.farmerName}</td>
-                        <td className="px-4 py-2 text-gray-400">
+                  <tbody>
+                    {displayAttributions.map((attr) => (
+                      <tr key={attr.farmerCode} className="border-b border-[#e2e8f0]">
+                        <td className="py-2 pr-2 font-mono text-[10px]">{attr.farmerCode}</td>
+                        <td className="py-2 pr-2 font-medium">{attr.farmerName}</td>
+                        <td className="py-2 pr-2 text-[#475569] hidden sm:table-cell">
                           {attr.region}, {attr.country}
                         </td>
-                        <td className="px-4 py-2 font-mono font-semibold">{attr.contributedWeightKg} kg</td>
-                        <td className="px-4 py-2 font-mono font-bold text-emerald-400">
+                        <td className="py-2 pr-2 text-right font-mono">
+                          {attr.contributedWeightKg} kg
+                        </td>
+                        <td className="py-2 text-right font-semibold">
                           {attr.contributionPercentage.toFixed(1)}%
                         </td>
                       </tr>
@@ -408,85 +274,76 @@ export function CertificateModal({
                   </tbody>
                 </table>
               </div>
-            </div>
 
-            <div
-              className={`p-3.5 rounded-xl border mb-6 space-y-1 ${
-                exportTheme === 'dark'
-                  ? 'bg-emerald-950/20 border-emerald-500/40 text-emerald-400'
-                  : 'bg-emerald-50 border-emerald-300 text-emerald-900'
-              }`}
-            >
-              <div className="flex items-center justify-between text-[10px] font-bold">
-                <div className="flex items-center space-x-1.5">
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
-                  <span>SHA-256 Lineage Fingerprint</span>
-                </div>
-                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-mono text-[9px]">
-                  HASHED FROM LOT DATA
-                </span>
-              </div>
-              <div className="font-mono text-[10px] break-all bg-slate-950/90 text-gray-300 p-2 rounded-lg border border-slate-800">
-                {lineageHash}
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-amber-500/30 flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
-              <div className="space-y-1 text-center">
-                <div className="font-serif italic text-sm font-bold text-amber-500 border-b border-amber-500/40 pb-1 px-4">
-                  Jean-Luc Habimana
-                </div>
-                <div className="text-[9px] font-extrabold uppercase text-gray-400">Lead Origin Inspector</div>
-                <div className="text-[8px] font-mono text-gray-500">Huye Farmers Cooperative Union</div>
+              {/* Integrity line */}
+              <div
+                className="mb-6 p-3 border border-[#e2e8f0] bg-[#f8fafc]"
+                style={{ fontFamily: 'system-ui, sans-serif' }}
+              >
+                <p className="text-[9px] uppercase tracking-[0.14em] text-[#64748b] mb-1">
+                  Document fingerprint (SHA-256)
+                </p>
+                <p className="font-mono text-[9px] sm:text-[10px] break-all text-[#334155] leading-relaxed">
+                  {lineageHash}
+                </p>
               </div>
 
-              <div className="flex flex-col items-center justify-center">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-amber-600 via-amber-400 to-yellow-200 p-1 shadow-2xl flex items-center justify-center">
-                  <div className="w-full h-full rounded-full border-2 border-dashed border-slate-950 bg-amber-500 flex flex-col items-center justify-center text-slate-950 text-center p-1 font-black leading-none">
-                    <CheckCircle2 className="w-5 h-5 mb-0.5" />
-                    <span className="text-[7px] uppercase tracking-tighter">ORIGIN CERT</span>
-                  </div>
+              {/* Signatures */}
+              <div
+                className="grid grid-cols-2 gap-6 sm:gap-10 pt-2"
+                style={{ fontFamily: 'system-ui, sans-serif' }}
+              >
+                <div>
+                  <div className="h-10 border-b border-[#1c2430]/50 mb-2" />
+                  <p className="text-[10px] font-semibold text-[#1c2430]">Origin Inspector</p>
+                  <p className="text-[9px] text-[#64748b]">Cooperative verification</p>
                 </div>
-                <span className="text-[8px] font-mono font-bold text-amber-500 mt-1">OFFICIAL SEAL</span>
+                <div>
+                  <div className="h-10 border-b border-[#1c2430]/50 mb-2" />
+                  <p className="text-[10px] font-semibold text-[#1c2430]">CoffeeTrace Desk</p>
+                  <p className="text-[9px] text-[#64748b]">Traceability records</p>
+                </div>
               </div>
 
-              <div className="space-y-1 text-center">
-                <div className="font-serif italic text-sm font-bold text-amber-500 border-b border-amber-500/40 pb-1 px-4">
-                  CoffeeTrace Ops
-                </div>
-                <div className="text-[9px] font-extrabold uppercase text-gray-400">Director of Traceability</div>
-                <div className="text-[8px] font-mono text-gray-500">CoffeeTrace Standards Desk</div>
-              </div>
+              <p
+                className="mt-6 text-center text-[9px] text-[#94a3b8] leading-relaxed"
+                style={{ fontFamily: 'system-ui, sans-serif' }}
+              >
+                This certificate summarises lineage data held in CoffeeTrace at the time of issue.
+                Verify the lot at the QR destination for the live graph.
+              </p>
             </div>
           </div>
         </div>
+      </ModalBody>
 
-        <div className="p-4 sm:p-5 border-t border-borderToken bg-surfaceHover/40 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
-          <div className="text-[11px] text-gray-400 flex items-center space-x-1.5">
-            <FileCheck className="w-4 h-4 text-amberAccent" />
-            <span>Printable PDF origin certificate with live QR trace link</span>
+      <ModalFooter>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="text-[11px] text-gray-400 flex items-center gap-1.5">
+            <FileCheck className="w-4 h-4 text-amberAccent shrink-0" />
+            <span>A4 portrait PDF · paper document layout</span>
           </div>
-
-          <div className="flex items-center space-x-3 w-full sm:w-auto justify-end">
+          <div className="flex items-center gap-2 sm:gap-3 justify-end">
             <button
+              type="button"
               onClick={handlePrint}
-              className="flex items-center space-x-2 px-4 py-2.5 rounded-xl border border-borderToken bg-surface hover:bg-surfaceHover text-gray-200 text-xs font-bold transition-all"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-borderToken bg-surface hover:bg-surfaceHover text-gray-200 text-xs font-bold"
             >
               <Printer className="w-4 h-4 text-amberAccent" />
-              <span>Print</span>
+              Print
             </button>
-
             <button
+              type="button"
               onClick={handleDownloadPDF}
               disabled={isGenerating}
-              className="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-amberAccent via-amber-500 to-amber-600 text-gray-950 text-xs font-black hover:opacity-95 shadow-lg shadow-amberAccent/25 transition-all"
+              className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl bg-amberAccent text-gray-950 text-xs font-black hover:opacity-95 disabled:opacity-50"
             >
               <Download className="w-4 h-4" />
-              <span>{isGenerating ? 'Generating PDF...' : 'Download PDF Certificate'}</span>
+              {isGenerating ? 'Generating…' : 'Download PDF'}
             </button>
           </div>
         </div>
-      </div>
-    </div>
+      </ModalFooter>
+    </ModalShell>
   );
 }

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { fetchBags, mergeBags } from '../lib/api';
 import { CoffeeBag } from '../types';
 import { GitMerge, X, CheckCircle2, ArrowRight } from 'lucide-react';
+import { ModalBody, ModalFooter, ModalHeader, ModalShell } from './ModalShell';
 
 interface MergeModalProps {
   isOpen: boolean;
@@ -34,7 +35,6 @@ export function MergeModal({ isOpen, onClose }: MergeModalProps) {
     enabled: isOpen,
   });
 
-  // Load more eligible pages lightly: fetch HARVESTED and IN_STORAGE pages
   const harvestedQuery = useQuery({
     queryKey: ['mergeBagsHarvested'],
     queryFn: () => fetchBags(1, 5, 'HARVESTED'),
@@ -68,6 +68,7 @@ export function MergeModal({ isOpen, onClose }: MergeModalProps) {
     );
     setErrorMsg('');
     setSuccessLot(null);
+    setTargetCode('');
   }, [isOpen, harvestedQuery.data, storageQuery.data, data]);
 
   const selectedSources = useMemo(() => sources.filter((s) => s.selected), [sources]);
@@ -86,8 +87,6 @@ export function MergeModal({ isOpen, onClose }: MergeModalProps) {
       setErrorMsg(err.response?.data?.message || 'Failed to execute bag merge operation');
     },
   });
-
-  if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,30 +119,38 @@ export function MergeModal({ isOpen, onClose }: MergeModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="w-full max-w-xl rounded-xl border border-borderToken bg-surface shadow-2xl p-6 space-y-5 max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between border-b border-borderToken pb-4">
-          <div className="flex items-center space-x-2">
-            <GitMerge className="w-5 h-5 text-amberAccent" />
-            <h2 className="text-base font-bold text-gray-100">Merge Coffee Bags</h2>
+    <ModalShell isOpen={isOpen} onClose={onClose} maxWidthClass="max-w-xl">
+      <ModalHeader>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center space-x-2 min-w-0">
+            <GitMerge className="w-5 h-5 text-amberAccent shrink-0" />
+            <h2 className="text-base font-bold text-gray-100 truncate">Merge Coffee Bags</h2>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-200">
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1.5 rounded-lg border border-borderToken text-gray-400 hover:text-gray-200 shrink-0"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
+      </ModalHeader>
 
-        {successLot ? (
-          <div className="space-y-4">
+      {successLot ? (
+        <>
+          <ModalBody>
             <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs space-y-2">
               <div className="flex items-center gap-2 font-bold text-emerald-400">
                 <CheckCircle2 className="w-4 h-4" />
                 Merge completed
               </div>
               <p>
-                Composite lot <span className="font-mono text-amberAccent">{successLot}</span> created
-                ({totalWeight.toFixed(1)} kg).
+                Composite lot <span className="font-mono text-amberAccent">{successLot}</span> created (
+                {totalWeight.toFixed(1)} kg).
               </p>
             </div>
+          </ModalBody>
+          <ModalFooter>
             <div className="flex justify-end gap-2">
               <button
                 type="button"
@@ -164,53 +171,55 @@ export function MergeModal({ isOpen, onClose }: MergeModalProps) {
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
-          </div>
-        ) : (
-          <>
+          </ModalFooter>
+        </>
+      ) : (
+        <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1">
+          <ModalBody className="space-y-4 text-xs">
             {errorMsg && (
               <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-medium">
                 {errorMsg}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-              <div>
-                <label className="block text-gray-300 font-medium mb-2">
-                  Source bags (select ≥ 2, set kg to use)
-                </label>
-                {isLoading || harvestedQuery.isLoading ? (
-                  <div className="text-gray-500 py-6 text-center">Loading eligible bags...</div>
-                ) : sources.length === 0 ? (
-                  <div className="text-gray-500 py-6 text-center border border-dashed border-borderToken rounded-lg">
-                    No merge-eligible bags with available weight.
-                  </div>
-                ) : (
-                  <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-                    {sources.map((s) => (
-                      <label
-                        key={s.bagId}
-                        className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
-                          s.selected
-                            ? 'border-amberAccent/50 bg-amberAccent/5'
-                            : 'border-borderToken bg-background/50'
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={s.selected}
-                          onChange={(e) =>
-                            setSources((prev) =>
-                              prev.map((row) =>
-                                row.bagId === s.bagId ? { ...row, selected: e.target.checked } : row
-                              )
+            <div>
+              <label className="block text-gray-300 font-medium mb-2">
+                Source bags (select ≥ 2, set kg to use)
+              </label>
+              {isLoading || harvestedQuery.isLoading ? (
+                <div className="text-gray-500 py-6 text-center">Loading eligible bags...</div>
+              ) : sources.length === 0 ? (
+                <div className="text-gray-500 py-6 text-center border border-dashed border-borderToken rounded-lg">
+                  No merge-eligible bags with available weight.
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {sources.map((s) => (
+                    <label
+                      key={s.bagId}
+                      className={`flex flex-wrap sm:flex-nowrap items-center gap-3 p-3 rounded-lg border transition-all ${
+                        s.selected
+                          ? 'border-amberAccent/50 bg-amberAccent/5'
+                          : 'border-borderToken bg-background/50'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={s.selected}
+                        onChange={(e) =>
+                          setSources((prev) =>
+                            prev.map((row) =>
+                              row.bagId === s.bagId ? { ...row, selected: e.target.checked } : row
                             )
-                          }
-                          className="accent-amberAccent"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="font-mono font-bold text-amberAccent">{s.bagCode}</div>
-                          <div className="text-[10px] text-gray-500">Available {s.availableKg} kg</div>
-                        </div>
+                          )
+                        }
+                        className="accent-amberAccent"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="font-mono font-bold text-amberAccent truncate">{s.bagCode}</div>
+                        <div className="text-[10px] text-gray-500">Available {s.availableKg} kg</div>
+                      </div>
+                      <div className="flex items-center gap-2 ml-auto">
                         <input
                           type="number"
                           min={0.1}
@@ -227,50 +236,52 @@ export function MergeModal({ isOpen, onClose }: MergeModalProps) {
                               )
                             )
                           }
-                          className="w-24 px-2 py-1.5 rounded-md bg-background border border-borderToken text-gray-100 font-mono disabled:opacity-40"
+                          className="w-20 sm:w-24 px-2 py-1.5 rounded-md bg-background border border-borderToken text-gray-100 font-mono disabled:opacity-40"
                         />
                         <span className="text-gray-500">kg</span>
-                      </label>
-                    ))}
-                  </div>
-                )}
-                <p className="mt-2 text-[10px] text-gray-500">
-                  Showing recent HARVESTED / IN_STORAGE bags (5 per status page). Selected total:{' '}
-                  <span className="text-amberAccent font-mono font-bold">{totalWeight.toFixed(1)} kg</span>
-                </p>
-              </div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              )}
+              <p className="mt-2 text-[10px] text-gray-500">
+                Selected total:{' '}
+                <span className="text-amberAccent font-mono font-bold">{totalWeight.toFixed(1)} kg</span>
+              </p>
+            </div>
 
-              <div>
-                <label className="block text-gray-300 font-medium mb-1">New composite lot code</label>
-                <input
-                  type="text"
-                  value={targetCode}
-                  onChange={(e) => setTargetCode(e.target.value)}
-                  placeholder="e.g. COMP-EXPORT-2026-99"
-                  className="w-full p-3 rounded-lg bg-background border border-borderToken text-gray-100 placeholder-gray-600 font-mono text-xs focus:outline-none focus:border-amberAccent"
-                />
-              </div>
+            <div>
+              <label className="block text-gray-300 font-medium mb-1">New composite lot code</label>
+              <input
+                type="text"
+                value={targetCode}
+                onChange={(e) => setTargetCode(e.target.value)}
+                placeholder="e.g. COMP-EXPORT-2026-99"
+                className="w-full p-3 rounded-lg bg-background border border-borderToken text-gray-100 placeholder-gray-600 font-mono text-xs focus:outline-none focus:border-amberAccent"
+              />
+            </div>
+          </ModalBody>
 
-              <div className="pt-4 flex items-center justify-end space-x-3 border-t border-borderToken">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-4 py-2 rounded-lg border border-borderToken text-gray-400 hover:text-gray-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={mutation.isPending}
-                  className="px-4 py-2 rounded-lg bg-amberAccent text-gray-950 font-semibold hover:bg-amberAccent/90 disabled:opacity-50"
-                >
-                  {mutation.isPending ? 'Merging...' : 'Execute Merge'}
-                </button>
-              </div>
-            </form>
-          </>
-        )}
-      </div>
-    </div>
+          <ModalFooter>
+            <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 rounded-lg border border-borderToken text-gray-400 hover:text-gray-200 text-xs"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={mutation.isPending}
+                className="px-4 py-2 rounded-lg bg-amberAccent text-gray-950 font-semibold hover:bg-amberAccent/90 disabled:opacity-50 text-xs"
+              >
+                {mutation.isPending ? 'Merging...' : 'Execute Merge'}
+              </button>
+            </div>
+          </ModalFooter>
+        </form>
+      )}
+    </ModalShell>
   );
 }

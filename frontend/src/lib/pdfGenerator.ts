@@ -1,28 +1,9 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
-export interface ExportCertificateData {
-  lotId: string;
-  weightKg: number;
-  region: string;
-  variety?: string;
-  qualityScore?: number;
-  moisturePercent?: number;
-  timestamp: string;
-  sha256Hash: string;
-  attributions?: Array<{
-    farmerCode: string;
-    farmerName: string;
-    region: string;
-    country: string;
-    contributedWeightKg: number;
-    contributionPercentage: number;
-  }>;
-  farmers?: string[];
-}
-
 /**
- * Captures the specified certificate DOM element and exports a crisp, high-resolution PDF certificate.
+ * Captures the certificate DOM and exports a portrait A4 PDF
+ * sized to fit the page with white paper margins.
  */
 export async function downloadCertificatePDF(
   elementId: string,
@@ -33,26 +14,33 @@ export async function downloadCertificatePDF(
     throw new Error(`Certificate element with id "${elementId}" not found.`);
   }
 
-  // Temporary clone or high-DPI capture setting
   const canvas = await html2canvas(element, {
-    scale: 3, // High DPI capture for ultra crisp text and visuals
+    scale: 2.5,
     useCORS: true,
     logging: false,
-    backgroundColor: '#0c0f17', // Match dark theme container
+    backgroundColor: '#ffffff',
+    windowWidth: element.scrollWidth,
   });
 
   const imgData = canvas.toDataURL('image/png', 1.0);
-
-  // Initialize jsPDF in Landscape mode (A4: 297mm x 210mm)
   const pdf = new jsPDF({
-    orientation: 'landscape',
+    orientation: 'portrait',
     unit: 'mm',
     format: 'a4',
   });
 
-  const pdfWidth = pdf.internal.pageSize.getWidth();
-  const pdfHeight = pdf.internal.pageSize.getHeight();
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  const margin = 8;
+  const maxWidth = pageWidth - margin * 2;
+  const maxHeight = pageHeight - margin * 2;
 
-  pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+  const ratio = Math.min(maxWidth / canvas.width, maxHeight / canvas.height);
+  const renderWidth = canvas.width * ratio;
+  const renderHeight = canvas.height * ratio;
+  const x = (pageWidth - renderWidth) / 2;
+  const y = margin;
+
+  pdf.addImage(imgData, 'PNG', x, y, renderWidth, renderHeight, undefined, 'FAST');
   pdf.save(filename);
 }

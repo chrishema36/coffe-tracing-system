@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createFarmer } from '../lib/api';
 import { X, UserPlus, MapPin, Phone, Mail, Mountain, CheckCircle } from 'lucide-react';
+import { ModalBody, ModalFooter, ModalHeader, ModalShell } from './ModalShell';
 
 interface RegisterFarmerModalProps {
   isOpen: boolean;
@@ -37,53 +38,50 @@ export function RegisterFarmerModal({ isOpen, onClose }: RegisterFarmerModalProp
     },
   });
 
-  if (!isOpen) return null;
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     mutation.mutate(formData);
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-fadeIn">
-      <div className="relative w-full max-w-lg p-6 rounded-2xl border border-borderToken bg-surface shadow-2xl space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-borderToken/60 pb-4">
-          <div className="flex items-center space-x-3">
-            <div className="p-2.5 rounded-xl bg-amberAccent/10 text-amberAccent border border-amberAccent/20">
+    <ModalShell isOpen={isOpen} onClose={onClose} maxWidthClass="max-w-lg">
+      <ModalHeader>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center space-x-3 min-w-0">
+            <div className="p-2.5 rounded-xl bg-amberAccent/10 text-amberAccent border border-amberAccent/20 shrink-0">
               <UserPlus className="w-5 h-5" />
             </div>
-            <div>
-              <h2 className="text-lg font-bold text-gray-100">Register New Farmer</h2>
-              <p className="text-xs text-gray-400">Add a Rwandan coffee producing partner to the system</p>
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-bold text-gray-100">Register New Farmer</h2>
+              <p className="text-xs text-gray-400 truncate">Add a coffee producing partner</p>
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg border border-borderToken text-gray-400 hover:text-gray-200 hover:bg-surfaceHover transition-all"
+            className="p-1.5 rounded-lg border border-borderToken text-gray-400 hover:text-gray-200 shrink-0"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
+      </ModalHeader>
 
-        {/* Success Alert */}
-        {successMsg && (
-          <div className="p-3.5 rounded-xl bg-emeraldAccent/10 border border-emeraldAccent/30 text-emeraldAccent text-xs font-semibold flex items-center space-x-2">
-            <CheckCircle className="w-4 h-4" />
-            <span>{successMsg}</span>
-          </div>
-        )}
+      <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1">
+        <ModalBody className="space-y-4 text-xs">
+          {successMsg && (
+            <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold flex items-center space-x-2">
+              <CheckCircle className="w-4 h-4" />
+              <span>{successMsg}</span>
+            </div>
+          )}
 
-        {/* Error Alert */}
-        {mutation.isError && (
-          <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-semibold">
-            Failed to register farmer. Please verify input fields.
-          </div>
-        )}
+          {mutation.isError && (
+            <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-semibold">
+              Failed to register farmer. Please verify input fields.
+            </div>
+          )}
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="font-semibold text-gray-300">Farmer Code</label>
               <input
@@ -94,7 +92,6 @@ export function RegisterFarmerModal({ isOpen, onClose }: RegisterFarmerModalProp
                 className="w-full px-3 py-2 rounded-lg bg-background border border-borderToken text-amberAccent font-mono font-bold focus:outline-none focus:border-amberAccent"
               />
             </div>
-
             <div className="space-y-1.5">
               <label className="font-semibold text-gray-300">Full Name</label>
               <input
@@ -108,58 +105,53 @@ export function RegisterFarmerModal({ isOpen, onClose }: RegisterFarmerModalProp
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="font-semibold text-gray-300 flex items-center space-x-1">
                 <Mail className="w-3.5 h-3.5 text-gray-500" />
-                <span>Email Address</span>
+                <span>Email</span>
               </label>
               <input
                 type="email"
                 placeholder="farmer@coop.rw"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                required
                 className="w-full px-3 py-2 rounded-lg bg-background border border-borderToken text-gray-100 focus:outline-none focus:border-amberAccent"
               />
             </div>
-
             <div className="space-y-1.5">
               <label className="font-semibold text-gray-300 flex items-center space-x-1">
                 <Phone className="w-3.5 h-3.5 text-gray-500" />
-                <span>Phone Number</span>
+                <span>Phone</span>
               </label>
               <input
                 type="text"
                 placeholder="+250-788-000-111"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                required
                 className="w-full px-3 py-2 rounded-lg bg-background border border-borderToken text-gray-100 focus:outline-none focus:border-amberAccent"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <label className="font-semibold text-gray-300 flex items-center space-x-1">
                 <MapPin className="w-3.5 h-3.5 text-gray-500" />
-                <span>Region / Washing Station</span>
+                <span>Region</span>
               </label>
               <input
                 type="text"
-                placeholder="Huye District, Southern Province"
                 value={formData.region}
                 onChange={(e) => setFormData({ ...formData, region: e.target.value })}
                 required
                 className="w-full px-3 py-2 rounded-lg bg-background border border-borderToken text-gray-100 focus:outline-none focus:border-amberAccent"
               />
             </div>
-
             <div className="space-y-1.5">
               <label className="font-semibold text-gray-300 flex items-center space-x-1">
                 <Mountain className="w-3.5 h-3.5 text-gray-500" />
-                <span>Elevation (Meters)</span>
+                <span>Elevation (m)</span>
               </label>
               <input
                 type="number"
@@ -170,26 +162,27 @@ export function RegisterFarmerModal({ isOpen, onClose }: RegisterFarmerModalProp
               />
             </div>
           </div>
+        </ModalBody>
 
-          {/* Action Buttons */}
-          <div className="flex items-center justify-end space-x-3 pt-4 border-t border-borderToken/60">
+        <ModalFooter>
+          <div className="flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl border border-borderToken text-gray-400 hover:bg-surfaceHover transition-all font-semibold"
+              className="px-4 py-2 rounded-xl border border-borderToken text-gray-400 hover:bg-surfaceHover font-semibold text-xs"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={mutation.isPending}
-              className="px-5 py-2 rounded-xl bg-amberAccent text-gray-950 font-bold hover:bg-amberAccent/90 shadow-lg shadow-amberAccent/20 transition-all disabled:opacity-50"
+              className="px-5 py-2 rounded-xl bg-amberAccent text-gray-950 font-bold hover:bg-amberAccent/90 disabled:opacity-50 text-xs"
             >
               {mutation.isPending ? 'Registering...' : 'Register Farmer'}
             </button>
           </div>
-        </form>
-      </div>
-    </div>
+        </ModalFooter>
+      </form>
+    </ModalShell>
   );
 }
