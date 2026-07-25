@@ -36,19 +36,7 @@ const STATUS_STYLES = {
   emerald: 'border-emerald-500/40 bg-emerald-500/10 text-emerald-300',
 } as const;
 
-const SCROLL_OFFSET = 88;
-
-function getScrollParent(el: HTMLElement | null): HTMLElement | null {
-  let node = el?.parentElement ?? null;
-  while (node && node !== document.body) {
-    const { overflowY } = window.getComputedStyle(node);
-    if (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay') {
-      return node;
-    }
-    node = node.parentElement;
-  }
-  return null;
-}
+const SCROLL_OFFSET = 72;
 
 function SectionHeading({
   eyebrow,
@@ -72,8 +60,8 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
   const [activeId, setActiveId] = useState<CatalogueSectionId>('overview');
   const [glossaryFilter, setGlossaryFilter] = useState('');
   const navRef = useRef<HTMLElement | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
   const activeBtnRefs = useRef<Partial<Record<CatalogueSectionId, HTMLButtonElement | null>>>({});
-  const rootRef = useRef<HTMLDivElement | null>(null);
 
   const filteredGlossary = useMemo(() => {
     const q = glossaryFilter.trim().toLowerCase();
@@ -84,120 +72,72 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
   }, [glossaryFilter]);
 
   const updateActiveFromScroll = useCallback(() => {
-    const first = document.getElementById(CATALOGUE_NAV[0].id);
-    if (!first) return;
+    const scroller = contentRef.current;
+    if (!scroller) return;
 
-    const scrollRoot = getScrollParent(first);
-    const marker = scrollRoot
-      ? scrollRoot.getBoundingClientRect().top + SCROLL_OFFSET
-      : SCROLL_OFFSET;
-
+    const marker = scroller.getBoundingClientRect().top + SCROLL_OFFSET;
     let current: CatalogueSectionId = CATALOGUE_NAV[0].id;
+
     for (const item of CATALOGUE_NAV) {
-      const el = document.getElementById(item.id);
+      const el = scroller.querySelector<HTMLElement>(`#${item.id}`);
       if (!el) continue;
-      if (el.getBoundingClientRect().top <= marker + 4) {
+      if (el.getBoundingClientRect().top <= marker + 2) {
         current = item.id;
       }
     }
+
     setActiveId((prev) => (prev === current ? prev : current));
   }, []);
 
   useEffect(() => {
-    const first = document.getElementById(CATALOGUE_NAV[0].id);
-    const scrollRoot = getScrollParent(first) ?? window;
+    const scroller = contentRef.current;
+    if (!scroller) return;
 
     updateActiveFromScroll();
-    scrollRoot.addEventListener('scroll', updateActiveFromScroll, { passive: true });
+    scroller.addEventListener('scroll', updateActiveFromScroll, { passive: true });
     window.addEventListener('resize', updateActiveFromScroll);
 
     return () => {
-      scrollRoot.removeEventListener('scroll', updateActiveFromScroll);
+      scroller.removeEventListener('scroll', updateActiveFromScroll);
       window.removeEventListener('resize', updateActiveFromScroll);
     };
   }, [updateActiveFromScroll]);
 
   useEffect(() => {
     const btn = activeBtnRefs.current[activeId];
-    const nav = navRef.current;
-    if (!btn || !nav) return;
+    if (!btn || !navRef.current) return;
     btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
   }, [activeId]);
 
   const scrollTo = (id: CatalogueSectionId) => {
-    const el = document.getElementById(id);
-    if (!el) return;
+    const scroller = contentRef.current;
+    const el = scroller?.querySelector<HTMLElement>(`#${id}`);
+    if (!scroller || !el) return;
 
-    const scrollRoot = getScrollParent(el);
     setActiveId(id);
-
-    if (scrollRoot) {
-      const rootRect = scrollRoot.getBoundingClientRect();
-      const elRect = el.getBoundingClientRect();
-      const nextTop = scrollRoot.scrollTop + (elRect.top - rootRect.top) - SCROLL_OFFSET + 8;
-      scrollRoot.scrollTo({ top: Math.max(0, nextTop), behavior: 'smooth' });
-    } else {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    const nextTop =
+      scroller.scrollTop +
+      (el.getBoundingClientRect().top - scroller.getBoundingClientRect().top) -
+      SCROLL_OFFSET +
+      4;
+    scroller.scrollTo({ top: Math.max(0, nextTop), behavior: 'smooth' });
   };
 
-  return (
-    <div ref={rootRef} className={`animate-fadeIn ${embedded ? '' : 'max-w-6xl mx-auto'}`}>
-      <div className="relative overflow-hidden rounded-3xl border border-borderToken bg-gradient-to-br from-[#1a1410] via-surface to-background px-6 py-8 sm:px-10 sm:py-11 mb-8">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.12]"
-          style={{
-            backgroundImage:
-              'radial-gradient(circle at 12% 20%, #F59E0B 0%, transparent 42%), radial-gradient(circle at 88% 10%, #78716c 0%, transparent 35%)',
-          }}
-        />
-        <div className="relative flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
-          <div className="space-y-4 max-w-2xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-amberAccent/35 bg-amberAccent/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.18em] text-amberAccent">
-              <BookOpen className="w-3.5 h-3.5" />
-              Product catalogue
-            </div>
-            <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-gray-50 leading-tight">
-              Understand CoffeeTrace
-              <span className="block text-amberAccent/90 font-extrabold text-2xl sm:text-3xl mt-1">
-                from harvest bag to export lot
-              </span>
-            </h1>
-            <p className="text-sm sm:text-[15px] text-gray-300 leading-relaxed">
-              This guide explains what the system does, the language it uses, how coffee moves through
-              merges, and how origin is proven for any lot. Written for operators, reviewers, and anyone
-              new to the platform.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2 text-[11px] font-bold">
-            {[
-              { icon: Users, label: 'Farmers' },
-              { icon: Package, label: 'Bags' },
-              { icon: GitMerge, label: 'Merges' },
-              { icon: Scale, label: 'Attribution' },
-              { icon: FileText, label: 'Certificates' },
-            ].map(({ icon: Icon, label }) => (
-              <span
-                key={label}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-borderToken bg-background/50 px-3 py-2 text-gray-300"
-              >
-                <Icon className="w-3.5 h-3.5 text-amberAccent" />
-                {label}
-              </span>
-            ))}
-          </div>
-        </div>
-      </div>
+  const shellHeight = embedded
+    ? 'h-[calc(100dvh-12.5rem)] min-h-[420px]'
+    : 'h-[calc(100dvh-7rem)] min-h-[480px]';
 
-      <div className="lg:grid lg:grid-cols-[230px_minmax(0,1fr)] lg:gap-10 lg:items-start">
-        {/* Sticky TOC: sticks inside the app <main> scroll container */}
-        <aside className="sticky top-0 z-30 -mx-4 mb-6 px-4 py-3 lg:mx-0 lg:mb-0 lg:px-0 lg:py-2 lg:top-2 lg:max-h-[calc(100vh-1rem)] lg:overflow-y-auto bg-background/95 backdrop-blur-md border-b border-borderToken lg:border-b-0 lg:bg-background/90">
+  return (
+    <div className={`animate-fadeIn ${embedded ? '' : 'max-w-6xl mx-auto'} ${shellHeight}`}>
+      {/* Split layout: TOC stays put, only the right pane scrolls */}
+      <div className="flex flex-col lg:flex-row gap-4 lg:gap-8 h-full min-h-0">
+        <aside className="shrink-0 lg:w-[230px] lg:overflow-y-auto rounded-2xl border border-borderToken bg-surface/80 p-3 lg:p-4">
           <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-gray-500 mb-3 px-1">
             On this page
           </p>
           <nav
             ref={navRef}
-            className="flex lg:flex-col gap-1.5 overflow-x-auto no-scrollbar pb-1 lg:pb-0"
+            className="flex lg:flex-col gap-1.5 overflow-x-auto no-scrollbar pb-0.5 lg:pb-0"
             aria-label="Documentation sections"
           >
             {CATALOGUE_NAV.map((item) => {
@@ -214,7 +154,7 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
                   className={`shrink-0 text-left rounded-xl px-3 py-2 text-xs font-bold transition-colors border ${
                     isActive
                       ? 'bg-amberAccent text-gray-950 border-amberAccent shadow-sm'
-                      : 'text-gray-400 hover:text-gray-100 hover:bg-surfaceHover border-transparent lg:border-borderToken/60'
+                      : 'text-gray-400 hover:text-gray-100 hover:bg-surfaceHover border-transparent lg:border-borderToken/50'
                   }`}
                 >
                   <span className="lg:hidden">{item.short}</span>
@@ -225,8 +165,58 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
           </nav>
         </aside>
 
-        <div className="space-y-16 pb-16">
-          <section id="overview" className="scroll-mt-28 space-y-5">
+        <div
+          ref={contentRef}
+          className="flex-1 min-h-0 overflow-y-auto overscroll-contain rounded-2xl border border-borderToken bg-background/40 px-4 py-5 sm:px-6 sm:py-6 scroll-smooth"
+        >
+          <div className="relative overflow-hidden rounded-3xl border border-borderToken bg-gradient-to-br from-[#1a1410] via-surface to-background px-6 py-8 sm:px-10 sm:py-11 mb-10">
+            <div
+              className="pointer-events-none absolute inset-0 opacity-[0.12]"
+              style={{
+                backgroundImage:
+                  'radial-gradient(circle at 12% 20%, #F59E0B 0%, transparent 42%), radial-gradient(circle at 88% 10%, #78716c 0%, transparent 35%)',
+              }}
+            />
+            <div className="relative flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+              <div className="space-y-4 max-w-2xl">
+                <div className="inline-flex items-center gap-2 rounded-full border border-amberAccent/35 bg-amberAccent/10 px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.18em] text-amberAccent">
+                  <BookOpen className="w-3.5 h-3.5" />
+                  Product catalogue
+                </div>
+                <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-gray-50 leading-tight">
+                  Understand CoffeeTrace
+                  <span className="block text-amberAccent/90 font-extrabold text-2xl sm:text-3xl mt-1">
+                    from harvest bag to export lot
+                  </span>
+                </h1>
+                <p className="text-sm sm:text-[15px] text-gray-300 leading-relaxed">
+                  This guide explains what the system does, the language it uses, how coffee moves through
+                  merges, and how origin is proven for any lot. Written for operators, reviewers, and anyone
+                  new to the platform.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2 text-[11px] font-bold">
+                {[
+                  { icon: Users, label: 'Farmers' },
+                  { icon: Package, label: 'Bags' },
+                  { icon: GitMerge, label: 'Merges' },
+                  { icon: Scale, label: 'Attribution' },
+                  { icon: FileText, label: 'Certificates' },
+                ].map(({ icon: Icon, label }) => (
+                  <span
+                    key={label}
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-borderToken bg-background/50 px-3 py-2 text-gray-300"
+                  >
+                    <Icon className="w-3.5 h-3.5 text-amberAccent" />
+                    {label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-16 pb-10">
+          <section id="overview" className="scroll-mt-20 space-y-5">
             <SectionHeading eyebrow="01 · Overview" title="What is CoffeeTrace?">
               CoffeeTrace is a coffee supply-chain traceability platform. It records smallholder harvest
               bags, lets operations merge those bags into larger composite lots across multiple tiers, and
@@ -260,7 +250,7 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
             </div>
           </section>
 
-          <section id="purpose" className="scroll-mt-28 space-y-5">
+          <section id="purpose" className="scroll-mt-20 space-y-5">
             <SectionHeading eyebrow="02 · Purpose" title="The problem it solves">
               In export coffee, many small harvest bags are combined again and again into warehouse lots and
               finally into export lots. Without structured lineage, buyers and auditors cannot reliably
@@ -286,7 +276,7 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
             </div>
           </section>
 
-          <section id="concepts" className="scroll-mt-28 space-y-5">
+          <section id="concepts" className="scroll-mt-20 space-y-5">
             <SectionHeading eyebrow="03 · Concepts" title="Core building blocks">
               Almost everything in CoffeeTrace is built from three ideas: farmers, bags, and merge
               relations between bags.
@@ -323,7 +313,7 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
             </div>
           </section>
 
-          <section id="lifecycle" className="scroll-mt-28 space-y-5">
+          <section id="lifecycle" className="scroll-mt-20 space-y-5">
             <SectionHeading eyebrow="04 · Lifecycle" title="Bag statuses explained">
               Status tells you what you can still do with a bag. There are four statuses in the system.
               There is no separate &quot;ACTIVE&quot; status; &quot;active storage&quot; on the dashboard simply means bags
@@ -346,7 +336,7 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
             </div>
           </section>
 
-          <section id="merging" className="scroll-mt-28 space-y-5">
+          <section id="merging" className="scroll-mt-20 space-y-5">
             <SectionHeading eyebrow="05 · Merging" title="How bag merges work">
               Merging is how smaller bags become warehouse and export lots. The platform always creates a
               <em className="text-gray-100 not-italic"> new</em> target bag code for the result. It does not
@@ -368,7 +358,7 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
             </ul>
           </section>
 
-          <section id="traceability" className="scroll-mt-28 space-y-5">
+          <section id="traceability" className="scroll-mt-20 space-y-5">
             <SectionHeading eyebrow="06 · Traceability" title="Backward and forward lineage">
               Traceability answers two complementary questions from any bag in the graph.
             </SectionHeading>
@@ -400,7 +390,7 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
             </p>
           </section>
 
-          <section id="attribution" className="scroll-mt-28 space-y-5">
+          <section id="attribution" className="scroll-mt-20 space-y-5">
             <SectionHeading eyebrow="07 · Attribution" title="How farmer percentages are calculated">
               Attribution is mass-based. For a selected lot, the system aggregates contributed kilograms that
               ultimately come from each farmer&apos;s harvest bags, then expresses each share as a percentage of
@@ -415,7 +405,7 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
             </div>
           </section>
 
-          <section id="certificates" className="scroll-mt-28 space-y-5">
+          <section id="certificates" className="scroll-mt-20 space-y-5">
             <SectionHeading eyebrow="08 · Certificates" title="Origin export certificates">
               Certificates package a lot&apos;s identity and farmer attributions into a printable document for
               demos, audits, and buyer conversations.
@@ -435,7 +425,7 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
             </ul>
           </section>
 
-          <section id="workflows" className="scroll-mt-28 space-y-6">
+          <section id="workflows" className="scroll-mt-20 space-y-6">
             <SectionHeading eyebrow="09 · Workflows" title="Day-to-day operating workflows">
               These are the main jobs users perform in the product.
             </SectionHeading>
@@ -459,7 +449,7 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
             </div>
           </section>
 
-          <section id="screens" className="scroll-mt-28 space-y-5">
+          <section id="screens" className="scroll-mt-20 space-y-5">
             <SectionHeading eyebrow="10 · Screens" title="Where to find things in the app">
               A quick map of the product surfaces.
             </SectionHeading>
@@ -484,7 +474,7 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
             </div>
           </section>
 
-          <section id="rules" className="scroll-mt-28 space-y-5">
+          <section id="rules" className="scroll-mt-20 space-y-5">
             <SectionHeading eyebrow="11 · Rules" title="System rules you should know">
               These constraints are enforced by the API and reflected in the UI.
             </SectionHeading>
@@ -501,7 +491,7 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
             </div>
           </section>
 
-          <section id="glossary" className="scroll-mt-28 space-y-5">
+          <section id="glossary" className="scroll-mt-20 space-y-5">
             <SectionHeading eyebrow="12 · Glossary" title="Terms used throughout CoffeeTrace">
               Search or skim the dictionary of product language.
             </SectionHeading>
@@ -529,7 +519,7 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
             </dl>
           </section>
 
-          <section id="stack" className="scroll-mt-28 space-y-5">
+          <section id="stack" className="scroll-mt-20 space-y-5">
             <SectionHeading eyebrow="13 · Stack" title="Technical overview (brief)">
               Useful context for engineers and technical reviewers. Not required to operate the product.
             </SectionHeading>
@@ -575,6 +565,7 @@ export function ProductCatalogue({ embedded = false }: { embedded?: boolean }) {
               </Link>
             )}
           </section>
+          </div>
         </div>
       </div>
     </div>
