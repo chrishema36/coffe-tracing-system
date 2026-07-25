@@ -119,7 +119,7 @@ export default function TraceabilityPage({ params }: { params: { id: string } })
         <div className="p-16 text-center text-gray-400 rounded-2xl border border-borderToken bg-surface shadow-2xl flex flex-col items-center justify-center space-y-3">
           <div className="w-8 h-8 rounded-full border-3 border-amberAccent border-t-transparent animate-spin" />
           <p className="text-sm font-semibold">
-            Executing PostgreSQL Recursive CTE trace & computing farmer mass attributions...
+            Executing backward lineage trace & computing farmer mass attributions...
           </p>
         </div>
       ) : isError || !trace ? (

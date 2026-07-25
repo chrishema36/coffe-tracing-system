@@ -30,13 +30,12 @@
 
 ## 🌟 Key Platform Features & Highlights
 
-- 🔄 **Traceability Replay Engine (⭐ Core Highlight):** Step-by-step 5–10 second animated playback demonstrating how smallholder farmer harvest bags recursively merge across tiers into final export lots.
-- 📜 **Coffee Origin Export Certificate Generator:** One-click downloadable & printable certificates featuring Export Lot ID, participating farmers, origin regions, timestamps, QR codes, and immutable SHA-256 digital signature hashes.
-- ⚡ **Command Palette (`Ctrl + K` / `Cmd + K`):** Global quick-search and action overlay for instant navigation across farmers, coffee bags, merges, and system settings.
-- 👤 **Farmer Profile Side Drawer:** Interactive slide-over panel displaying farmer contact info, lifetime bag count, total yield, average weight, harvest timeline, and export contribution history.
-- 🛡️ **System Activity Audit Log:** Full audit trail logging harvest creation, merge operations, lineage queries, and export certificate generations.
-- 📊 **Executive Dashboard & System Health:** Real-time activity timeline, recent farmer registrations, variety weight distribution, and live health monitors (API, Database, Storage, Deployment).
-- 🛡️ **Strict Pagination Guard & Validation:** Max 5 records per page strictly enforced across all REST API endpoints (`/farmers`, `/bags`) via Zod input DTOs and SQL limit parameters.
+- 🔄 **Traceability Replay Engine (⭐ Core Highlight):** Step-by-step animated playback of how smallholder harvest bags recursively merge across tiers into final export lots.
+- 📜 **Coffee Origin Export Certificate Generator:** Downloadable/printable certificates with lot ID, farmer attributions, origin regions, timestamps, a QR link to the live trace page, and a SHA-256 fingerprint of the certificate payload.
+- ⚡ **Command Palette (`Ctrl + K` / `Cmd + K`):** Global quick-search and action overlay for farmers, bags, merges, and settings.
+- 👤 **Farmer Profile Side Drawer:** Slide-over panel with contact info, bag counts, yield stats, and harvest history.
+- 📊 **Executive Dashboard:** Activity timeline, variety breakdown, and operational quick actions.
+- 🛡️ **Strict Pagination Guard:** Max 5 records per page enforced on list endpoints (`/farmers`, `/bags`) via Zod DTOs and service limits.
 
 ---
 
@@ -51,7 +50,7 @@ graph TD
         ExpressApp -->|Middleware| ZodVal[Zod DTO Validator & Rate Limiter]
         ZodVal --> Controller[Controllers Layer]
         Controller --> Services[Services Layer - Bag & Farmer Logic]
-        Services --> CTE[Recursive CTE Lineage Engine & Cycle Detector]
+        Services --> Trace[BFS Lineage Engine & Cycle Detector]
     end
     
     Services -->|Prisma ORM| PostgresDB[(PostgreSQL 16 Database)]
@@ -109,7 +108,7 @@ sequenceDiagram
     autonumber
     actor Farmer as Farmer (Jean Bosco)
     participant API as Express REST API
-    participant CTE as PostgreSQL CTE Engine
+    participant Trace as Lineage Trace Engine
     actor Buyer as International Buyer
 
     Farmer->>API: POST /api/v1/bags (Log Bag-A1: 50kg)
@@ -117,9 +116,9 @@ sequenceDiagram
     Farmer->>API: POST /api/v1/bags/merge (Merge Bag-A1 + Bag-B1 -> Lot-M1)
     API-->>Farmer: 201 Created (MERGED)
     Buyer->>API: GET /api/v1/bags/EXPORT-SUPER-LOT-01/trace
-    API->>CTE: Execute Recursive CTE Query & Cycle Check
-    CTE-->>API: Graph Nodes, Edges & Farmer Attributions
-    API-->>Buyer: 200 OK { success: true, data: { attributions: [Abebe 60%, Tigist 40%] } }
+    API->>Trace: Backward DAG walk & cycle-safe attribution
+    Trace-->>API: Graph Nodes, Edges & Farmer Attributions
+    API-->>Buyer: 200 OK { success: true, data: { attributions: [...] } }
 ```
 
 ---
@@ -138,7 +137,7 @@ sequenceDiagram
 │   │   ├── middleware/           # Central error handler, rate limiters
 │   │   ├── repositories/         # Prisma database access layer
 │   │   ├── routes/               # Express API v1 route mounts & Swagger spec
-│   │   ├── services/             # Recursive CTE lineage, cycle detection, merge logic
+│   │   ├── services/             # Lineage BFS, cycle detection, merge logic
 │   │   ├── types/                # TypeScript type definitions
 │   │   ├── app.ts                # Express application factory
 │   │   └── server.ts             # Server entry point
@@ -158,7 +157,7 @@ sequenceDiagram
 │   │   │   ├── page.tsx          # Executive Dashboard
 │   │   │   └── providers.tsx     # React Query & Toast context providers
 │   │   ├── components/
-│   │   │   ├── AuditLogModal.tsx # System activity audit log viewer
+│   │   │   ├── AuditLogModal.tsx # Demo recent-activity timeline
 │   │   │   ├── BagsTable.tsx     # Density switcher, status badges, filters
 │   │   │   ├── CertificateModal.tsx # Export origin certificate generator
 │   │   │   ├── CommandPalette.tsx # Ctrl+K global search & actions

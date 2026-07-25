@@ -1,67 +1,68 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, ShieldCheck, Search, Filter, Calendar, Clock, User, Coffee, GitMerge, FileText } from 'lucide-react';
+import { X, Activity, Filter, Clock, User, Coffee, GitMerge, FileText } from 'lucide-react';
 
 interface AuditLogModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+/** Sample operational events for the demo UI (not a persisted audit backend). */
+const sampleLogs = [
+  {
+    id: 'LOG-001',
+    timestamp: '2026-07-22 17:45:10',
+    action: 'EXPORT_CERTIFICATE_GENERATED',
+    details: 'Origin certificate generated for EXPORT-SUPER-LOT-01 (250 kg)',
+    actor: 'Ops Console',
+    icon: FileText,
+    badgeColor: 'text-amberAccent bg-amberAccent/15 border-amberAccent/35',
+  },
+  {
+    id: 'LOG-002',
+    timestamp: '2026-07-22 17:10:04',
+    action: 'LINEAGE_TRACE_EXECUTION',
+    details: 'Backward lineage trace for EXPORT-SUPER-LOT-01 (multi-tier DAG walk)',
+    actor: 'Buyer Portal',
+    icon: GitMerge,
+    badgeColor: 'text-sky-400 bg-sky-500/15 border-sky-500/35',
+  },
+  {
+    id: 'LOG-003',
+    timestamp: '2026-07-22 16:30:22',
+    action: 'BAGS_MERGED',
+    details: 'Merged BAG-2026-M1 (90 kg) and BAG-2026-M2 (140 kg) into EXPORT-SUPER-LOT-01',
+    actor: 'Warehouse Ops',
+    icon: GitMerge,
+    badgeColor: 'text-amber-400 bg-amber-500/15 border-amber-500/35',
+  },
+  {
+    id: 'LOG-004',
+    timestamp: '2026-07-22 15:12:00',
+    action: 'BAG_LOGGED',
+    details: 'Harvest bag BAG-2026-A1 registered (50 kg, Arabica) for Jean-Luc Habimana',
+    actor: 'Field Registrar',
+    icon: Coffee,
+    badgeColor: 'text-emerald-400 bg-emerald-500/15 border-emerald-500/35',
+  },
+  {
+    id: 'LOG-005',
+    timestamp: '2026-07-22 14:05:18',
+    action: 'FARMER_REGISTERED',
+    details: 'Registered farmer Emmanuel Nshimiyimana (FRM-RWA-003, Gakenke)',
+    actor: 'System Registrar',
+    icon: User,
+    badgeColor: 'text-violet-400 bg-violet-500/15 border-violet-500/35',
+  },
+];
+
 export function AuditLogModal({ isOpen, onClose }: AuditLogModalProps) {
   const [filterType, setFilterType] = useState<string>('ALL');
 
   if (!isOpen) return null;
 
-  const mockLogs = [
-    {
-      id: 'LOG-001',
-      timestamp: '2026-07-22 17:45:10',
-      action: 'EXPORT_CERTIFICATE_GENERATED',
-      details: 'Export certificate generated for EXPORT-SUPER-LOT-01 (250 kg)',
-      actor: 'Admin System',
-      icon: FileText,
-      badgeColor: 'text-amberAccent bg-amberAccent/15 border-amberAccent/35',
-    },
-    {
-      id: 'LOG-002',
-      timestamp: '2026-07-22 17:10:04',
-      action: 'RECURSIVE_TRACE_EXECUTION',
-      details: 'Recursive CTE lineage query executed for EXPORT-SUPER-LOT-01 (Result: 4 nodes, depth 3)',
-      actor: 'Auditor User',
-      icon: GitMerge,
-      badgeColor: 'text-sky-400 bg-sky-500/15 border-sky-500/35',
-    },
-    {
-      id: 'LOG-003',
-      timestamp: '2026-07-22 16:30:22',
-      action: 'BAGS_MERGED',
-      details: 'Merged BAG-2026-M1 (90 kg) and BAG-2026-M2 (140 kg) into EXPORT-SUPER-LOT-01',
-      actor: 'Jean Bosco (Agronomist)',
-      icon: GitMerge,
-      badgeColor: 'text-amber-400 bg-amber-500/15 border-amber-500/35',
-    },
-    {
-      id: 'LOG-004',
-      timestamp: '2026-07-22 15:12:00',
-      action: 'BAG_LOGGED',
-      details: 'Harvest bag BAG-2026-A1 registered (50 kg, Arabica) for Farmer Jean Bosco',
-      actor: 'Jean Bosco',
-      icon: Coffee,
-      badgeColor: 'text-emerald-400 bg-emerald-500/15 border-emerald-500/35',
-    },
-    {
-      id: 'LOG-005',
-      timestamp: '2026-07-22 14:05:18',
-      action: 'FARMER_REGISTERED',
-      details: 'Registered new farmer Emmanuel Nshimiyimana (FARM-002, Huye Region)',
-      actor: 'System Registrar',
-      icon: User,
-      badgeColor: 'text-purple-400 bg-purple-500/15 border-purple-500/35',
-    },
-  ];
-
-  const filteredLogs = mockLogs.filter((log) => {
+  const filteredLogs = sampleLogs.filter((log) => {
     if (filterType === 'ALL') return true;
     return log.action.includes(filterType);
   });
@@ -71,15 +72,16 @@ export function AuditLogModal({ isOpen, onClose }: AuditLogModalProps) {
       <div className="fixed inset-0" onClick={onClose} />
 
       <div className="relative w-full max-w-3xl rounded-3xl border border-borderToken bg-surface shadow-2xl overflow-hidden z-10 my-8">
-        {/* Header */}
         <div className="p-6 border-b border-borderToken flex items-center justify-between bg-surfaceHover/30">
           <div className="flex items-center space-x-3">
             <div className="p-3 rounded-2xl bg-emerald-500/15 border border-emerald-500/35 text-emerald-400 shadow-md">
-              <ShieldCheck className="w-6 h-6" />
+              <Activity className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-lg font-black text-gray-100 tracking-tight">System Activity Audit Log</h2>
-              <p className="text-xs text-gray-400">Immutable record of coffee harvests, merges, and certificates</p>
+              <h2 className="text-lg font-black text-gray-100 tracking-tight">Recent Activity</h2>
+              <p className="text-xs text-gray-400">
+                Sample operational timeline for demo review (harvests, merges, traces, certificates)
+              </p>
             </div>
           </div>
 
@@ -91,7 +93,6 @@ export function AuditLogModal({ isOpen, onClose }: AuditLogModalProps) {
           </button>
         </div>
 
-        {/* Filters */}
         <div className="px-6 py-3 border-b border-borderToken bg-background/60 flex items-center justify-between gap-4 text-xs">
           <div className="flex items-center space-x-2">
             <Filter className="w-3.5 h-3.5 text-amberAccent" />
@@ -115,7 +116,6 @@ export function AuditLogModal({ isOpen, onClose }: AuditLogModalProps) {
           </div>
         </div>
 
-        {/* Log List */}
         <div className="p-6 max-h-[60vh] overflow-y-auto space-y-3">
           {filteredLogs.map((log) => {
             const Icon = log.icon;
@@ -152,10 +152,9 @@ export function AuditLogModal({ isOpen, onClose }: AuditLogModalProps) {
           })}
         </div>
 
-        {/* Footer */}
         <div className="p-4 border-t border-borderToken bg-surfaceHover/30 flex justify-between items-center text-xs text-gray-400">
-          <span>Showing {filteredLogs.length} audit trail entries</span>
-          <span className="font-mono text-emerald-400 text-[11px]">Audit Engine Active</span>
+          <span>Showing {filteredLogs.length} sample events</span>
+          <span className="font-mono text-amberAccent text-[11px]">Demo timeline</span>
         </div>
       </div>
     </div>

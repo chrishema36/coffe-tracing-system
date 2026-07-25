@@ -19,13 +19,13 @@
 ### Phase 3: Express Backend Core Development
 - [x] Set up Express app with TypeScript, Helmet, CORS, and Pino logging middleware.
 - [x] Implement `FarmerRepository` and `BagRepository`.
-- [x] Implement `TraceabilityService` with recursive SQL CTE query and cycle prevention logic.
+- [x] Implement `TraceabilityService` with backward lineage BFS and cycle prevention logic.
 - [x] Build REST API Controllers with Zod validation.
 - [x] Enforce strict **5 records per page** default pagination limit on all `GET` endpoints.
 - [x] Setup Swagger OpenAPI documentation route at `/docs`.
 
 ### Phase 4: Frontend Development (Next.js & React Flow)
-- [x] Bootstrap Next.js 14 App Router project with TailwindCSS and shadcn/ui.
+- [x] Bootstrap Next.js 14 App Router project with TailwindCSS.
 - [x] Build Farmers page with paginated table (5 rows per page).
 - [x] Build Coffee Bags page with status filters and merge action modal.
 - [x] Implement Merge Drawer with source bag multi-select and real-time total weight calculation.
@@ -40,9 +40,9 @@
 ### Phase 6: DevOps & Deployment
 - [x] Write `Dockerfile` for backend and `Dockerfile` for frontend.
 - [x] Create `docker-compose.yml` for local containerized execution.
-- [ ] Deploy database to Supabase / Railway.
-- [ ] Deploy backend to Railway / Render.
-- [ ] Deploy frontend to Vercel.
+- [x] Deploy database to Neon.
+- [x] Deploy backend to Render.
+- [x] Deploy frontend to Vercel.
 
 ---
 
@@ -53,7 +53,7 @@
 | **Purchases coffee from multiple farmers & exports** | Models for Farmers & Coffee Bags in database schema | Verified |
 | **Unique ID printed on each bag** | `bagCode` field with `@unique` index (e.g. `BAG-2026-0001`) | Verified |
 | **Combine bags into larger composite bags** | `MergeRelation` junction table supporting $N \to M$ bag merges | Verified |
-| **Trace back to original farmers after multiple merges** | Recursive CTE algorithm calculating farmer weight & % contribution | Verified |
+| **Trace back to original farmers after multiple merges** | Backward lineage BFS calculating farmer weight & % contribution | Verified |
 | **Default listing not exceeding 5 records per page** | Strict `limit = 5` enforced in backend controllers & pagination DTOs | Verified |
 | **Backend: Node.js, TypeScript, Express, PostgreSQL** | Express TypeScript server connected via Prisma ORM to PostgreSQL | Verified |
 | **Frontend: React or Next.js** | Next.js 14 App Router with Tailwind CSS & React Flow | Verified |

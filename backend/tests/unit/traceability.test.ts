@@ -217,6 +217,17 @@ describe('TraceabilityService (Unit Tests)', () => {
   // checkCycle — Cycle Detection Tests
   // -----------------------------------------------------------------------
   describe('checkCycle()', () => {
+    it('should return false for a brand-new target (null id) with unique sources', async () => {
+      const isCycle = await traceService.checkCycle(['bag-a', 'bag-b'], null);
+      expect(isCycle).toBe(false);
+      expect(mockPrisma.mergeRelation.findMany).not.toHaveBeenCalled();
+    });
+
+    it('should detect duplicate source bag IDs even when target is new', async () => {
+      const isCycle = await traceService.checkCycle(['bag-a', 'bag-a'], null);
+      expect(isCycle).toBe(true);
+    });
+
     it('should detect a direct self-reference cycle (sourceBag === targetBag)', async () => {
       const isCycle = await traceService.checkCycle(['bag-x'], 'bag-x');
       expect(isCycle).toBe(true);

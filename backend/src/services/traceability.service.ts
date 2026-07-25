@@ -202,12 +202,20 @@ export class TraceabilityService {
    * Pre-merge Cycle Detection
    *
    * Checks if linking sourceBagIds → targetBagId would create a directed cycle
-   * in the merge DAG. Uses BFS traversal with global visited Set.
+   * in the merge DAG. Uses BFS traversal with a visited Set.
+   *
+   * When `targetBagId` is null/undefined (brand-new child bag), only duplicate
+   * source IDs can fail — a new node cannot already appear in any ancestry.
    *
    * Complexity: O(N + E) per source bag where N = ancestors, E = edges.
    */
-  async checkCycle(sourceBagIds: string[], targetBagId: string): Promise<boolean> {
-    // Direct self-reference check
+  async checkCycle(sourceBagIds: string[], targetBagId?: string | null): Promise<boolean> {
+    if (new Set(sourceBagIds).size !== sourceBagIds.length) return true;
+
+    // Brand-new target bag: no existing node to close a cycle with.
+    if (!targetBagId) return false;
+
+    // Direct self-reference check (UUIDs / existing bag ids only)
     if (sourceBagIds.includes(targetBagId)) return true;
 
     // For each source, BFS upward through ancestry looking for targetBagId

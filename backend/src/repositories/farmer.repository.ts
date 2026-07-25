@@ -17,6 +17,10 @@ export class FarmerRepository {
         OR: [{ id }, { code: id }],
       },
       include: {
+        bags: {
+          orderBy: { createdAt: 'desc' },
+          take: 50,
+        },
         _count: {
           select: { bags: true },
         },

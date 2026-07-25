@@ -14,10 +14,11 @@ interface FarmerProfileDrawerProps {
 export function FarmerProfileDrawer({ farmer, isOpen, onClose, onLogHarvestForFarmer }: FarmerProfileDrawerProps) {
   if (!isOpen || !farmer) return null;
 
-  const totalBags = farmer.bags?.length || 0;
-  const totalVolumeKg = farmer.bags?.reduce((acc, b) => acc + (b.initialWeightKg || 0), 0) || 0;
-  const avgBagWeight = totalBags > 0 ? (totalVolumeKg / totalBags).toFixed(1) : '0';
-  const highestYield = farmer.bags?.reduce((max, b) => Math.max(max, b.initialWeightKg || 0), 0) || 0;
+  const bags = farmer.bags ?? [];
+  const totalBags = farmer._count?.bags ?? bags.length;
+  const totalVolumeKg = bags.reduce((acc, b) => acc + (b.initialWeightKg || 0), 0);
+  const avgBagWeight = bags.length > 0 ? (totalVolumeKg / bags.length).toFixed(1) : '0';
+  const highestYield = bags.reduce((max, b) => Math.max(max, b.initialWeightKg || 0), 0);
 
   return (
     <div className="fixed inset-0 z-[100] flex justify-end bg-background/70 backdrop-blur-sm animate-fadeIn">
@@ -123,12 +124,12 @@ export function FarmerProfileDrawer({ farmer, isOpen, onClose, onLogHarvestForFa
                   <Coffee className="w-4 h-4 text-amberAccent" />
                   <span>Harvest History Ledger</span>
                 </span>
-                <span className="text-[10px] text-gray-400 font-mono">{totalBags} records</span>
+                <span className="text-[10px] text-gray-400 font-mono">{bags.length} shown</span>
               </div>
 
-              {farmer.bags && farmer.bags.length > 0 ? (
+              {bags.length > 0 ? (
                 <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-                  {farmer.bags.map((bag) => (
+                  {bags.map((bag) => (
                     <div
                       key={bag.id}
                       className="p-3 rounded-xl border border-borderToken bg-background/60 flex items-center justify-between text-xs hover:border-amberAccent/40 transition-all"

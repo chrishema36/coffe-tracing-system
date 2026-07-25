@@ -177,11 +177,11 @@ export default function SettingsPage() {
 
             <div className="p-4 rounded-2xl border border-borderToken bg-surface space-y-2">
               <div className="flex items-center justify-between text-xs text-gray-400">
-                <span>CTE Recursive Query</span>
+                <span>Lineage Trace Engine</span>
                 <Cpu className="w-4 h-4 text-amberAccent" />
               </div>
-              <div className="text-xl font-bold font-mono text-amberAccent">OPTIMIZED</div>
-              <div className="text-[10px] text-gray-500">Cycle Detection Active</div>
+              <div className="text-xl font-bold font-mono text-amberAccent">READY</div>
+              <div className="text-[10px] text-gray-500">BFS walk + cycle guards</div>
             </div>
 
             <div className="p-4 rounded-2xl border border-borderToken bg-surface space-y-2">
@@ -241,7 +241,7 @@ export default function SettingsPage() {
             </p>
             <ul className="list-disc list-inside space-y-1 text-[11px] text-gray-400 pt-1">
               <li>Next.js App Router & Tailwind CSS with Glassmorphism & Framer Motion</li>
-              <li>Node.js / Express backend with Prisma ORM & PostgreSQL CTE Recursive queries</li>
+              <li>Node.js / Express backend with Prisma ORM & PostgreSQL lineage tracing</li>
               <li>Strict Zod input validation & 5 records/page limit guard</li>
               <li>Docker Compose deployment ready for 1-command review</li>
             </ul>

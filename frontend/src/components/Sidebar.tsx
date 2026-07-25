@@ -20,7 +20,7 @@ const navItems = [
   { label: 'Dashboard', href: '/', icon: LayoutDashboard, badge: null },
   { label: 'Farmers', href: '/farmers', icon: Users, badge: null },
   { label: 'Coffee Bags', href: '/bags', icon: Package, badge: null },
-  { label: 'Traceability Graph', href: '/trace/EXPORT-SUPER-LOT-01', icon: GitMerge, badge: '50ms CTE' },
+  { label: 'Traceability Graph', href: '/trace/EXPORT-SUPER-LOT-01', icon: GitMerge, badge: 'Replay' },
   { label: 'Settings', href: '/settings', icon: Settings, badge: null },
 ];
 

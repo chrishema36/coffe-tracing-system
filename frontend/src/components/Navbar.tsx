@@ -82,7 +82,7 @@ export function Navbar() {
 
           <div className="hidden lg:flex items-center space-x-2 px-3 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-500/35 text-emerald-400 text-xs font-bold">
             <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span>PostgreSQL CTE Active</span>
+            <span>Lineage Engine Ready</span>
           </div>
         </div>
       </header>

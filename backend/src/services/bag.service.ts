@@ -82,8 +82,11 @@ export class BagService {
       }
     }
 
-    // 4. Pre-merge cycle detection — prevents DAG becoming a cyclic graph
-    const hasCycle = await this.traceService.checkCycle(data.sourceBagIds, data.targetBagCode);
+    // 4. Pre-merge cycle detection
+    // Target bag is always newly created (409 above if code exists), so the new child
+    // cannot already sit in any source's ancestry. Pass null for target id.
+    // Still rejects duplicate source IDs and would catch merges into an existing bag id.
+    const hasCycle = await this.traceService.checkCycle(data.sourceBagIds, null);
     if (hasCycle) {
       throw new AppError(
         400,

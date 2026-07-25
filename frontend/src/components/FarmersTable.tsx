@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { fetchFarmers } from '../lib/api';
+import { fetchFarmerById, fetchFarmers } from '../lib/api';
 import {
   ChevronLeft,
   ChevronRight,
@@ -14,8 +14,6 @@ import {
   PlusCircle,
   MoreVertical,
   Eye,
-  Edit2,
-  Trash2,
   Award,
   Scale,
   Calendar,
@@ -24,10 +22,8 @@ import {
 import { LogBagModal } from './LogBagModal';
 import { FarmerProfileDrawer } from './FarmerProfileDrawer';
 import { Farmer } from '../types';
-import { useToast } from '../context/ToastContext';
 
 export function FarmersTable() {
-  const toast = useToast();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [selectedFarmer, setSelectedFarmer] = useState<Farmer | null>(null);
@@ -55,21 +51,22 @@ export function FarmersTable() {
       )
     : allFarmers;
 
-  const handleOpenDrawer = (farmer: Farmer) => {
+  const handleOpenDrawer = async (farmer: Farmer) => {
     setSelectedFarmer(farmer);
     setIsDrawerOpen(true);
     setOpenKebabId(null);
+    try {
+      const detail = await fetchFarmerById(farmer.id);
+      if (detail?.data) setSelectedFarmer(detail.data);
+    } catch {
+      // Keep list row data if detail fetch fails
+    }
   };
 
   const handleLogBagForFarmer = (farmer: Farmer) => {
     setSelectedFarmer(farmer);
     setIsLogBagOpen(true);
     setOpenKebabId(null);
-  };
-
-  const handleDeleteFarmer = (farmer: Farmer) => {
-    setOpenKebabId(null);
-    toast.info('Delete Requested', `Farmer record ${farmer.name} marked for archival.`);
   };
 
   return (
@@ -259,27 +256,6 @@ export function FarmersTable() {
                           >
                             <PlusCircle className="w-3.5 h-3.5 text-emerald-400" />
                             <span>Log Harvest Bag</span>
-                          </button>
-
-                          <button
-                            onClick={() => {
-                              setOpenKebabId(null);
-                              toast.info('Edit Farmer', `Editing modal for ${farmer.name}`);
-                            }}
-                            className="w-full flex items-center space-x-2 px-3.5 py-2 hover:bg-surfaceHover text-gray-300 text-left transition-colors"
-                          >
-                            <Edit2 className="w-3.5 h-3.5 text-sky-400" />
-                            <span>Edit Profile</span>
-                          </button>
-
-                          <div className="border-t border-borderToken/60 my-1" />
-
-                          <button
-                            onClick={() => handleDeleteFarmer(farmer)}
-                            className="w-full flex items-center space-x-2 px-3.5 py-2 hover:bg-red-500/10 text-red-400 text-left transition-colors"
-                          >
-                            <Trash2 className="w-3.5 h-3.5 text-red-400" />
-                            <span>Delete Farmer</span>
                           </button>
                         </div>
                       )}

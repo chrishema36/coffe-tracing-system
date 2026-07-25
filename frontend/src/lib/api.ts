@@ -20,6 +20,11 @@ export const createFarmer = async (farmerData: Partial<Farmer>) => {
   return data;
 };
 
+export const fetchFarmerById = async (idOrCode: string) => {
+  const { data } = await api.get<ApiResponse<Farmer>>(`/farmers/${encodeURIComponent(idOrCode)}`);
+  return data;
+};
+
 export const fetchBags = async (page = 1, limit = 5, status = '', search = '') => {
   const { data } = await api.get<ApiResponse<CoffeeBag[]>>('/bags', {
     params: { page, limit, status: status || undefined, search },

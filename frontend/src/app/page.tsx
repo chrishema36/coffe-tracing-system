@@ -69,7 +69,7 @@ export default function DashboardPage() {
 
   const activityTimeline = [
     { time: '10:22 AM', title: 'Export Certificate Generated', subtitle: 'Lot EXPORT-SUPER-LOT-01 (250 kg)', icon: FileText, color: 'text-amberAccent bg-amberAccent/15 border-amberAccent/35' },
-    { time: '10:10 AM', title: 'Lineage Trace Requested', subtitle: 'Recursive CTE query executed (Depth 3)', icon: GitMerge, color: 'text-sky-400 bg-sky-500/15 border-sky-500/35' },
+    { time: '10:10 AM', title: 'Lineage Trace Requested', subtitle: 'Backward DAG walk for EXPORT-SUPER-LOT-01', icon: GitMerge, color: 'text-sky-400 bg-sky-500/15 border-sky-500/35' },
     { time: '09:55 AM', title: 'Merged into EXPORT-01', subtitle: 'BAG-2026-M1 & BAG-2026-M2 combined', icon: GitMerge, color: 'text-amber-400 bg-amber-500/15 border-amber-500/35' },
     { time: '09:20 AM', title: 'Bag RW-2026-01 Harvested', subtitle: 'Logged by Jean Bosco (50 kg Arabica)', icon: Coffee, color: 'text-emerald-400 bg-emerald-500/15 border-emerald-500/35' },
   ];
@@ -161,7 +161,7 @@ export default function DashboardPage() {
             className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-surface hover:bg-surfaceHover border border-borderToken text-gray-200 text-xs font-bold transition-all hover:border-purple-400/50 ml-auto"
           >
             <Activity className="w-3.5 h-3.5 text-purple-400" />
-            <span>Audit Log</span>
+            <span>Activity</span>
           </button>
         </div>
       </div>
@@ -362,7 +362,7 @@ export default function DashboardPage() {
                 <span>Database</span>
               </div>
               <div className="font-mono font-bold text-emerald-400 text-sm">Healthy</div>
-              <div className="text-[10px] text-gray-500">PostgreSQL CTE</div>
+              <div className="text-[10px] text-gray-500">PostgreSQL + Prisma</div>
             </div>
 
             <div className="p-3.5 rounded-xl border border-borderToken bg-background/60 space-y-1">
@@ -371,7 +371,7 @@ export default function DashboardPage() {
                 <span>Storage</span>
               </div>
               <div className="font-mono font-bold text-emerald-400 text-sm">Healthy</div>
-              <div className="text-[10px] text-gray-500">Encrypted Blob</div>
+              <div className="text-[10px] text-gray-500">App assets</div>
             </div>
 
             <div className="p-3.5 rounded-xl border border-borderToken bg-background/60 space-y-1">
@@ -454,7 +454,7 @@ export default function DashboardPage() {
                 <span>Sample Lineage Trace Lots</span>
               </div>
               <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/15 px-2.5 py-0.5 rounded-full border border-emerald-500/35">
-                PostgreSQL CTE
+                Lineage Graph
               </span>
             </div>
             <p className="text-[11px] text-gray-400 leading-relaxed">
