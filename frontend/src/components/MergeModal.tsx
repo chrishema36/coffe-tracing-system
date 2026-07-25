@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { fetchBags, mergeBags } from '../lib/api';
 import { CoffeeBag } from '../types';
 import { GitMerge, X, CheckCircle2, ArrowRight } from 'lucide-react';
-import { ModalBody, ModalFooter, ModalHeader, ModalShell } from './ModalShell';
+import { ModalBody, ModalFooter, ModalForm, ModalHeader, ModalShell } from './ModalShell';
 
 interface MergeModalProps {
   isOpen: boolean;
@@ -174,7 +174,7 @@ export function MergeModal({ isOpen, onClose }: MergeModalProps) {
           </ModalFooter>
         </>
       ) : (
-        <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1">
+        <ModalForm onSubmit={handleSubmit}>
           <ModalBody className="space-y-4 text-xs">
             {errorMsg && (
               <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-medium">
@@ -280,7 +280,7 @@ export function MergeModal({ isOpen, onClose }: MergeModalProps) {
               </button>
             </div>
           </ModalFooter>
-        </form>
+        </ModalForm>
       )}
     </ModalShell>
   );

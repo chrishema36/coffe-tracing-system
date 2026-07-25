@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createBag, fetchFarmers } from '../lib/api';
 import { X, PackagePlus, Scale, Sparkles, CheckCircle } from 'lucide-react';
 import { CoffeeVariety } from '../types';
-import { ModalBody, ModalFooter, ModalHeader, ModalShell } from './ModalShell';
+import { ModalBody, ModalFooter, ModalForm, ModalHeader, ModalShell } from './ModalShell';
 
 interface LogBagModalProps {
   isOpen: boolean;
@@ -79,7 +79,7 @@ export function LogBagModal({ isOpen, onClose }: LogBagModalProps) {
         </div>
       </ModalHeader>
 
-      <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1">
+      <ModalForm onSubmit={handleSubmit}>
         <ModalBody className="space-y-4 text-xs">
           {successMsg && (
             <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold flex items-center space-x-2">
@@ -200,7 +200,7 @@ export function LogBagModal({ isOpen, onClose }: LogBagModalProps) {
             </button>
           </div>
         </ModalFooter>
-      </form>
+      </ModalForm>
     </ModalShell>
   );
 }

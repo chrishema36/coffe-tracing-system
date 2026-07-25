@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createFarmer } from '../lib/api';
 import { X, UserPlus, MapPin, Phone, Mail, Mountain, CheckCircle } from 'lucide-react';
-import { ModalBody, ModalFooter, ModalHeader, ModalShell } from './ModalShell';
+import { ModalBody, ModalFooter, ModalForm, ModalHeader, ModalShell } from './ModalShell';
 
 interface RegisterFarmerModalProps {
   isOpen: boolean;
@@ -66,7 +66,7 @@ export function RegisterFarmerModal({ isOpen, onClose }: RegisterFarmerModalProp
         </div>
       </ModalHeader>
 
-      <form onSubmit={handleSubmit} className="flex flex-col min-h-0 flex-1">
+      <ModalForm onSubmit={handleSubmit}>
         <ModalBody className="space-y-4 text-xs">
           {successMsg && (
             <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold flex items-center space-x-2">
@@ -182,7 +182,7 @@ export function RegisterFarmerModal({ isOpen, onClose }: RegisterFarmerModalProp
             </button>
           </div>
         </ModalFooter>
-      </form>
+      </ModalForm>
     </ModalShell>
   );
 }

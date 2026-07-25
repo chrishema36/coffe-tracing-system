@@ -5,7 +5,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { updateFarmer } from '../lib/api';
 import { Farmer } from '../types';
 import { X, UserCog, MapPin, Phone, Mail, Mountain, CheckCircle } from 'lucide-react';
-import { ModalBody, ModalFooter, ModalHeader, ModalShell } from './ModalShell';
+import { ModalBody, ModalFooter, ModalForm, ModalHeader, ModalShell } from './ModalShell';
 
 interface EditFarmerModalProps {
   isOpen: boolean;
@@ -87,12 +87,11 @@ export function EditFarmerModal({ isOpen, onClose, farmer }: EditFarmerModalProp
         </div>
       </ModalHeader>
 
-      <form
+      <ModalForm
         onSubmit={(e) => {
           e.preventDefault();
           mutation.mutate();
         }}
-        className="flex flex-col min-h-0 flex-1"
       >
         <ModalBody className="space-y-4 text-xs">
           {successMsg && (
@@ -199,7 +198,7 @@ export function EditFarmerModal({ isOpen, onClose, farmer }: EditFarmerModalProp
             </button>
           </div>
         </ModalFooter>
-      </form>
+      </ModalForm>
     </ModalShell>
   );
 }
